@@ -1,7 +1,8 @@
 # Multi-Database Load Tester v0.1
 
 Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2를 지원하는 고성능 멀티스레드 데이터베이스 부하 테스트 도구 (HikariCP 기반)
--- 아직 Update/Delete 는 미구성.
+
+## 아직 Update/Delete 는 미구성.
 
 ## 주요 특징
 
