@@ -90,15 +90,19 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 
     @Override
     public void releaseConnection(Connection connection, boolean isError) {
-        if (connection != null) {
-            try {
-                if (isError) {
+        if (connection == null) return;
+        try {
+            if (isError) {
+                try {
                     connection.rollback();
+                } catch (SQLException ignored) {
+                    // 롤백 에러 무시
                 }
-                connection.close();
-            } catch (SQLException e) {
-                logger.warn("Error closing connection", e);
             }
+            connection.close();
+        } catch (SQLException e) {
+            // 커넥션 종료 에러는 무시 (정상적인 종료 상황)
+            logger.trace("Connection close error (ignored): {}", e.getMessage());
         }
     }
 
@@ -130,12 +134,12 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 
     @Override
     public void rollback(Connection conn) {
+        if (conn == null) return;
         try {
-            if (conn != null) {
-                conn.rollback();
-            }
+            conn.rollback();
         } catch (SQLException e) {
-            logger.warn("Error during rollback", e);
+            // 롤백 에러는 모두 무시 (이미 에러 복구 경로)
+            logger.trace("Rollback error (ignored): {}", e.getMessage());
         }
     }
 
@@ -145,10 +149,8 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
         return random.nextLong(1, maxId + 1);
     }
 
-    /**
-     * 랜덤 데이터 생성
-     */
-    protected String generateRandomData(int length) {
+    @Override
+    public String generateRandomData(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {

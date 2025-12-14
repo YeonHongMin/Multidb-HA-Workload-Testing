@@ -4,6 +4,7 @@ import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Multi-Database Load Tester v2.1 (HikariCP Version)
  *
- * 지원 데이터베이스: Oracle, PostgreSQL, MySQL, SQL Server, Tibero
+ * 지원 데이터베이스: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2
  */
 public class MultiDBLoadTester {
     private static final Logger logger = LoggerFactory.getLogger(MultiDBLoadTester.class);
@@ -38,6 +39,7 @@ public class MultiDBLoadTester {
             case "mysql" -> new MySQLAdapter();
             case "sqlserver", "mssql" -> new SQLServerAdapter();
             case "tibero" -> new TiberoAdapter();
+            case "db2" -> new DB2Adapter();
             default -> throw new IllegalArgumentException("Unsupported database type: " + dbType);
         };
     }
@@ -244,6 +246,12 @@ public class MultiDBLoadTester {
     }
 
     public static void main(String[] args) {
+        // logs 디렉토리 생성
+        File logsDir = new File("logs");
+        if (!logsDir.exists()) {
+            logsDir.mkdirs();
+        }
+
         Options options = buildOptions();
         CommandLineParser parser = new DefaultParser();
 
@@ -298,7 +306,7 @@ public class MultiDBLoadTester {
                     Integer.parseInt(cmd.getOptionValue("test-duration", "300")),
                     WorkMode.fromString(cmd.getOptionValue("mode", "full")),
                     cmd.hasOption("skip-schema-setup"),
-                    Double.parseDouble(cmd.getOptionValue("monitor-interval", "5.0")),
+                    Double.parseDouble(cmd.getOptionValue("monitor-interval", "1.0")),
                     Integer.parseInt(cmd.getOptionValue("sub-second-interval", "100")),
                     Integer.parseInt(cmd.getOptionValue("warmup", "0")),
                     Integer.parseInt(cmd.getOptionValue("ramp-up", "0")),
@@ -320,7 +328,7 @@ public class MultiDBLoadTester {
 
         // 필수 옵션
         options.addOption(Option.builder().longOpt("db-type")
-                .hasArg().desc("Database type: oracle, postgresql, mysql, sqlserver, tibero").build());
+                .hasArg().desc("Database type: oracle, postgresql, mysql, sqlserver, tibero, db2").build());
         options.addOption(Option.builder().longOpt("host")
                 .hasArg().desc("Database host").build());
         options.addOption(Option.builder().longOpt("user")
@@ -364,7 +372,7 @@ public class MultiDBLoadTester {
 
         // 모니터링 옵션
         options.addOption(Option.builder().longOpt("monitor-interval")
-                .hasArg().desc("Monitor output interval in seconds (default: 5.0)").build());
+                .hasArg().desc("Monitor output interval in seconds (default: 1.0)").build());
         options.addOption(Option.builder().longOpt("sub-second-interval")
                 .hasArg().desc("Sub-second measurement window in ms (default: 100)").build());
 

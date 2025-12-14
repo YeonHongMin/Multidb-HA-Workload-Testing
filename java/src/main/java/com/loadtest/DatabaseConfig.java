@@ -232,6 +232,7 @@ public class DatabaseConfig {
             case "mysql" -> 3306;
             case "sqlserver", "mssql" -> 1433;
             case "tibero" -> 8629;
+            case "db2" -> 50000;
             default -> 0;
         };
     }

@@ -10,6 +10,7 @@ com/loadtest/LoadTestWorker.class
 com/loadtest/DatabaseAdapter.class
 com/loadtest/RateLimiter.class
 com/loadtest/DatabaseConfig.class
+com/loadtest/DB2Adapter.class
 com/loadtest/OracleAdapter.class
 com/loadtest/DatabaseConfig$Builder.class
 com/loadtest/SQLServerAdapter.class

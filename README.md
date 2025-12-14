@@ -1,10 +1,10 @@
 # Multi-Database Load Tester v2.1
 
-Oracle, PostgreSQL, MySQL, SQL Server, Tibero를 지원하는 고성능 멀티스레드 데이터베이스 부하 테스트 도구 (HikariCP 기반)
+Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2를 지원하는 고성능 멀티스레드 데이터베이스 부하 테스트 도구 (HikariCP 기반)
 
 ## 주요 특징
 
-- **5개 데이터베이스 지원**: Oracle, PostgreSQL, MySQL, SQL Server, Tibero
+- **6개 데이터베이스 지원**: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2
 - **HikariCP 커넥션 풀**: 고성능 JDBC 커넥션 풀링
 - **고성능 멀티스레딩**: 최대 1000개 동시 세션 지원
 - **6가지 작업 모드**: full, insert-only, select-only, update-only, delete-only, mixed
@@ -20,16 +20,319 @@ Oracle, PostgreSQL, MySQL, SQL Server, Tibero를 지원하는 고성능 멀티�
 
 ---
 
-## 시스템 요구사항
+## 사전 요구사항 (Prerequisites)
 
-- Java JDK 17+
-- Maven 3.6+
-- 지원 데이터베이스:
-  - Oracle 19c+
-  - PostgreSQL 11+
-  - MySQL 5.7+
-  - SQL Server 2016+
-  - Tibero 6+
+### 1. Java Development Kit (JDK) 17+
+
+이 도구는 Java 17 이상이 필요합니다.
+
+#### 버전 확인
+
+```bash
+java -version
+# openjdk version "17.0.x" 또는 이상 버전 필요
+```
+
+#### 설치 방법
+
+**macOS (Homebrew)**
+```bash
+brew install openjdk@17
+# 또는 최신 LTS 버전
+brew install openjdk@21
+
+# 환경 변수 설정
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export PATH=$JAVA_HOME/bin:$PATH
+```
+
+**Ubuntu/Debian**
+```bash
+sudo apt update
+sudo apt install openjdk-17-jdk
+
+# 환경 변수 설정 (~/.bashrc 또는 ~/.zshrc에 추가)
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+```
+
+**RHEL/CentOS/Rocky Linux**
+```bash
+sudo yum install java-17-openjdk-devel
+# 또는
+sudo dnf install java-17-openjdk-devel
+
+# 환경 변수 설정
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+export PATH=$JAVA_HOME/bin:$PATH
+```
+
+**Windows**
+1. [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) 또는 [Adoptium](https://adoptium.net/) 에서 JDK 17+ 다운로드
+2. 설치 후 환경 변수 설정:
+   - `JAVA_HOME`: JDK 설치 경로 (예: `C:\Program Files\Java\jdk-17`)
+   - `PATH`에 `%JAVA_HOME%\bin` 추가
+
+---
+
+### 2. Apache Maven 3.6+
+
+프로젝트 빌드를 위해 Maven이 필요합니다.
+
+#### 버전 확인
+
+```bash
+mvn -version
+# Apache Maven 3.6.x 또는 이상 버전 필요
+```
+
+#### 설치 방법
+
+**macOS (Homebrew)**
+```bash
+brew install maven
+```
+
+**Ubuntu/Debian**
+```bash
+sudo apt update
+sudo apt install maven
+```
+
+**RHEL/CentOS/Rocky Linux**
+```bash
+sudo yum install maven
+# 또는
+sudo dnf install maven
+```
+
+**Windows**
+1. [Apache Maven](https://maven.apache.org/download.cgi) 에서 Binary zip 다운로드
+2. 원하는 위치에 압축 해제 (예: `C:\Program Files\Apache\maven`)
+3. 환경 변수 설정:
+   - `MAVEN_HOME`: Maven 설치 경로
+   - `PATH`에 `%MAVEN_HOME%\bin` 추가
+
+---
+
+### 3. 데이터베이스 요구사항
+
+#### 지원 데이터베이스 버전
+
+| 데이터베이스 | 최소 버전 | 권장 버전 | 기본 포트 |
+|-------------|----------|----------|----------|
+| Oracle | 19c | 21c+ | 1521 |
+| PostgreSQL | 11 | 15+ | 5432 |
+| MySQL | 5.7 | 8.0+ | 3306 |
+| SQL Server | 2016 | 2019+ | 1433 |
+| Tibero | 6 | 7 | 8629 |
+| IBM DB2 | 11.1 | 11.5+ | 50000 |
+
+#### 데이터베이스 사용자 권한
+
+테스트를 실행하려면 다음 권한이 필요합니다:
+
+**Oracle**
+```sql
+-- 테스트 사용자 생성 (SYS 또는 SYSTEM으로 접속)
+CREATE USER test_user IDENTIFIED BY test_pass;
+GRANT CONNECT, RESOURCE TO test_user;
+GRANT CREATE TABLE, CREATE SEQUENCE TO test_user;
+GRANT UNLIMITED TABLESPACE TO test_user;
+```
+
+**PostgreSQL**
+```sql
+-- 테스트 데이터베이스 및 사용자 생성
+CREATE USER test_user WITH PASSWORD 'test_pass';
+CREATE DATABASE testdb OWNER test_user;
+GRANT ALL PRIVILEGES ON DATABASE testdb TO test_user;
+```
+
+**MySQL**
+```sql
+-- 테스트 데이터베이스 및 사용자 생성
+CREATE DATABASE testdb;
+CREATE USER 'test_user'@'%' IDENTIFIED BY 'test_pass';
+GRANT ALL PRIVILEGES ON testdb.* TO 'test_user'@'%';
+FLUSH PRIVILEGES;
+
+-- max_connections 설정 확인 (높은 스레드 수 사용 시)
+SHOW VARIABLES LIKE 'max_connections';
+-- 필요시 증가: SET GLOBAL max_connections = 500;
+```
+
+**SQL Server**
+```sql
+-- 테스트 데이터베이스 및 사용자 생성
+CREATE DATABASE testdb;
+USE testdb;
+CREATE LOGIN test_user WITH PASSWORD = 'test_pass';
+CREATE USER test_user FOR LOGIN test_user;
+ALTER ROLE db_owner ADD MEMBER test_user;
+```
+
+**Tibero**
+```sql
+-- 테스트 사용자 생성
+CREATE USER test_user IDENTIFIED BY test_pass;
+GRANT CONNECT, RESOURCE TO test_user;
+GRANT CREATE TABLE, CREATE SEQUENCE TO test_user;
+```
+
+**IBM DB2**
+```sql
+-- 테스트 데이터베이스 및 사용자 생성
+CREATE DATABASE testdb;
+CONNECT TO testdb;
+CREATE USER test_user;
+GRANT CONNECT, CREATETAB, IMPLICIT_SCHEMA ON DATABASE TO USER test_user;
+```
+
+#### 데이터베이스 서버 설정
+
+높은 동시성 테스트를 위해 데이터베이스 서버 설정 조정이 필요할 수 있습니다:
+
+**Oracle**
+```sql
+-- 최대 세션/프로세스 수 확인
+SHOW PARAMETER sessions;
+SHOW PARAMETER processes;
+
+-- 증가 필요 시 (재시작 필요)
+ALTER SYSTEM SET sessions=1000 SCOPE=SPFILE;
+ALTER SYSTEM SET processes=500 SCOPE=SPFILE;
+```
+
+**PostgreSQL** (`postgresql.conf`)
+```ini
+max_connections = 500
+shared_buffers = 256MB
+```
+
+**MySQL** (`my.cnf` 또는 `my.ini`)
+```ini
+[mysqld]
+max_connections = 500
+max_user_connections = 0
+```
+
+**SQL Server**
+```sql
+-- 기본적으로 32,767 연결 지원
+-- 메모리 설정 확인
+EXEC sp_configure 'max server memory';
+```
+
+---
+
+### 4. 네트워크 요구사항
+
+#### 방화벽 설정
+
+테스트 클라이언트에서 데이터베이스 서버로의 접속을 위해 해당 포트가 열려 있어야 합니다:
+
+| 데이터베이스 | 포트 | 방화벽 명령 (Linux) |
+|-------------|------|-------------------|
+| Oracle | 1521 | `firewall-cmd --add-port=1521/tcp --permanent` |
+| PostgreSQL | 5432 | `firewall-cmd --add-port=5432/tcp --permanent` |
+| MySQL | 3306 | `firewall-cmd --add-port=3306/tcp --permanent` |
+| SQL Server | 1433 | `firewall-cmd --add-port=1433/tcp --permanent` |
+| Tibero | 8629 | `firewall-cmd --add-port=8629/tcp --permanent` |
+
+#### 연결 테스트
+
+```bash
+# 포트 연결 테스트
+nc -zv <호스트> <포트>
+# 또는
+telnet <호스트> <포트>
+
+# 예시
+nc -zv 192.168.0.100 1521
+```
+
+---
+
+### 5. 시스템 리소스 요구사항
+
+#### 최소 사양
+
+| 항목 | 최소 | 권장 |
+|------|------|------|
+| CPU | 2코어 | 4코어+ |
+| RAM | 2GB | 8GB+ |
+| 디스크 | 1GB (설치용) | SSD 권장 |
+
+#### JVM 메모리 설정
+
+고부하 테스트 시 JVM 힙 메모리 조정이 필요합니다:
+
+```bash
+# 기본 실행 (2GB 힙)
+java -Xms1g -Xmx2g -jar multi-db-load-tester-2.1.0.jar ...
+
+# 고부하 테스트 (4GB 힙, 500+ 스레드)
+java -Xms2g -Xmx4g -jar multi-db-load-tester-2.1.0.jar ...
+
+# 초고부하 테스트 (8GB 힙, 1000+ 스레드)
+java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-2.1.0.jar ...
+```
+
+#### 스레드 수에 따른 권장 리소스
+
+| 스레드 수 | RAM | JVM 힙 | 커넥션 풀 |
+|----------|-----|--------|----------|
+| ~100 | 4GB | 2GB | 100-150 |
+| ~200 | 8GB | 4GB | 200-250 |
+| ~500 | 16GB | 8GB | 500-600 |
+| ~1000 | 32GB | 16GB | 1000-1200 |
+
+#### 파일 디스크립터 제한 (Linux/macOS)
+
+고부하 테스트 시 파일 디스크립터 제한 증가가 필요할 수 있습니다:
+
+```bash
+# 현재 제한 확인
+ulimit -n
+
+# 임시 증가
+ulimit -n 65535
+
+# 영구 설정 (/etc/security/limits.conf)
+*    soft    nofile    65535
+*    hard    nofile    65535
+```
+
+---
+
+### 6. JDBC 드라이버 (자동 포함)
+
+모든 JDBC 드라이버가 `java/jre/` 디렉토리에 포함되어 있으며, 빌드 시 자동으로 JAR에 포함됩니다.
+
+#### 포함된 드라이버
+
+| 데이터베이스 | 드라이버 파일 | 위치 |
+|-------------|-------------|------|
+| Oracle | ojdbc10.jar | `java/jre/oracle/` |
+| PostgreSQL | postgresql-42.2.9.jar | `java/jre/postgresql/` |
+| MySQL | mysql-connector-j-9.5.0.jar | `java/jre/mysql/` |
+| SQL Server | mssql-jdbc-13.2.1.jre11.jar | `java/jre/sqlserver/` |
+| Tibero | tibero7-jdbc.jar | `java/jre/tibero/` |
+| IBM DB2 | jcc-12.1.3.0.jar | `java/jre/db2/` |
+
+#### 빌드 방법
+
+```bash
+cd java
+./build.sh
+```
+
+빌드 스크립트가 자동으로:
+1. 로컬 JDBC 드라이버를 Maven 로컬 저장소에 설치
+2. 모든 드라이버를 포함한 실행 가능한 JAR 생성
+
+> **Note**: 모든 JDBC 드라이버가 `java/jre/` 디렉토리에 포함되어 있습니다.
 
 ---
 
@@ -134,6 +437,16 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
     --thread-count 200
 ```
 
+### IBM DB2
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type db2 \
+    --host localhost --port 50000 --database testdb \
+    --user db2inst1 --password pass \
+    --thread-count 200
+```
+
 ---
 
 ## 고급 기능
@@ -191,7 +504,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 
 | 옵션 | 설명 |
 |------|------|
-| `--db-type` | 데이터베이스 타입 (oracle, postgresql, mysql, sqlserver, tibero) |
+| `--db-type` | 데이터베이스 타입 (oracle, postgresql, mysql, sqlserver, tibero, db2) |
 | `--host` | 데이터베이스 호스트 |
 | `--user` | 사용자명 |
 | `--password` | 비밀번호 |
@@ -238,7 +551,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 |------|--------|------|
 | `--output-format` | none | 결과 형식 (csv, json) |
 | `--output-file` | - | 결과 파일 경로 |
-| `--monitor-interval` | 5.0 | 모니터 출력 간격 (초) |
+| `--monitor-interval` | 1.0 | 모니터 출력 간격 (초) |
 | `--sub-second-interval` | 100 | Sub-second 측정 윈도우 (ms) |
 
 ### 기타
@@ -267,6 +580,7 @@ chmod +x *.sh
 ./run_mysql_test.sh
 ./run_sqlserver_test.sh
 ./run_tibero_test.sh
+./run_db2_test.sh
 ```
 
 환경 변수로 설정 가능:
@@ -290,31 +604,6 @@ export TEST_DURATION=300
 ```
 [Monitor] TXN: 45,230 | INS: 45,230 | SEL: 45,230 | UPD: 0 | DEL: 0 | ERR: 0 |
 Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
-```
-
----
-
-## Tibero JDBC 드라이버 설치
-
-Tibero JDBC 드라이버는 Maven Central에 없으므로 수동 설치가 필요합니다:
-
-```bash
-mvn install:install-file \
-    -Dfile=tibero7-jdbc.jar \
-    -DgroupId=com.tmax.tibero \
-    -DartifactId=tibero-jdbc \
-    -Dversion=7.0 \
-    -Dpackaging=jar
-```
-
-설치 후 pom.xml에 의존성 추가:
-
-```xml
-<dependency>
-    <groupId>com.tmax.tibero</groupId>
-    <artifactId>tibero-jdbc</artifactId>
-    <version>7.0</version>
-</dependency>
 ```
 
 ---
@@ -357,6 +646,7 @@ mvn install:install-file \
         ├── MySQLAdapter.java          # MySQL 어댑터
         ├── SQLServerAdapter.java      # SQL Server 어댑터
         ├── TiberoAdapter.java         # Tibero 어댑터
+        ├── DB2Adapter.java            # IBM DB2 어댑터
         ├── LoadTestWorker.java        # 부하 테스트 워커
         ├── MonitorThread.java         # 모니터링 스레드
         ├── PerformanceCounter.java    # 성능 카운터

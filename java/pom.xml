@@ -41,40 +41,49 @@
             <version>${logback.version}</version>
         </dependency>
 
-        <!-- JDBC Drivers -->
+        <!-- JDBC Drivers (Local JAR files from jre/ directory) -->
+        <!-- These are installed to local repo during validate phase -->
+
         <!-- Oracle -->
         <dependency>
             <groupId>com.oracle.database.jdbc</groupId>
-            <artifactId>ojdbc11</artifactId>
-            <version>23.3.0.23.09</version>
+            <artifactId>ojdbc10</artifactId>
+            <version>local</version>
         </dependency>
 
         <!-- PostgreSQL -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.1</version>
+            <version>local</version>
         </dependency>
 
         <!-- MySQL -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>8.2.0</version>
+            <version>local</version>
         </dependency>
 
         <!-- SQL Server -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
-            <version>12.4.2.jre11</version>
+            <version>local</version>
         </dependency>
 
-        <!-- Tibero (manually installed) -->
+        <!-- Tibero -->
         <dependency>
             <groupId>com.tmax.tibero</groupId>
             <artifactId>tibero-jdbc</artifactId>
-            <version>7.0</version>
+            <version>local</version>
+        </dependency>
+
+        <!-- IBM DB2 -->
+        <dependency>
+            <groupId>com.ibm.db2</groupId>
+            <artifactId>jcc</artifactId>
+            <version>local</version>
         </dependency>
 
         <!-- JSON Processing -->
@@ -94,6 +103,9 @@
 
     <build>
         <plugins>
+            <!-- NOTE: Local JDBC drivers must be installed before build using build.sh -->
+            <!-- build.sh runs: mvn install:install-file for each driver in jre/ directory -->
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -141,6 +153,6 @@
         </plugins>
     </build>
 
-    <!-- Tibero JDBC driver needs to be installed manually -->
-    <!-- mvn install:install-file -Dfile=tibero7-jdbc.jar -DgroupId=com.tmax.tibero -DartifactId=tibero-jdbc -Dversion=7.0 -Dpackaging=jar -->
+    <!-- JDBC Drivers: Local JAR files in jre/ directory are auto-installed during build -->
+    <!-- All drivers (Oracle, PostgreSQL, MySQL, SQL Server, Tibero, DB2) from jre/ directory -->
 </project>

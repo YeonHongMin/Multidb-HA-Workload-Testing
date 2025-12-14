@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LoadTestWorker implements Callable<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(LoadTestWorker.class);
+    private static final long ERROR_LOG_INTERVAL_MS = 10000;  // 에러 로그 출력 간격 (10초)
 
     private final DatabaseAdapter dbAdapter;
     private final Instant endTime;
@@ -27,6 +28,8 @@ public class LoadTestWorker implements Callable<Integer> {
     private final String threadName;
     private final Random random = new Random();
     private int transactionCount = 0;
+    private long lastErrorLogTime = 0;
+    private int suppressedErrorCount = 0;
 
     public LoadTestWorker(int workerId, DatabaseAdapter dbAdapter, Instant endTime,
                           WorkMode mode, long maxIdCache, int batchSize,
@@ -43,20 +46,44 @@ public class LoadTestWorker implements Callable<Integer> {
         this.threadName = String.format("Worker-%04d", workerId);
     }
 
-    private String generateRandomData(int length) {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
+    /**
+     * 에러 로그 빈도 제한 - 10초에 1회만 출력, 나머지는 DEBUG 레벨
+     * Connection is closed 등 무시할 에러는 로그 출력 안함
+     */
+    private void logError(String operation, String message) {
+        // 무시할 에러 패턴 (콘솔 출력 안함, 로그 파일에만 기록)
+        if (message != null && (
+                message.contains("Connection is closed") ||
+                message.contains("connection is closed") ||
+                message.contains("Already closed") ||
+                message.contains("No operations allowed after connection closed") ||
+                message.contains("Connection is not available") ||
+                message.contains("request timed out"))) {
+            logger.debug("[{}] {} (suppressed): {}", threadName, operation, message);
+            return;
         }
-        return sb.toString();
+
+        long now = System.currentTimeMillis();
+        if (now - lastErrorLogTime > ERROR_LOG_INTERVAL_MS) {
+            if (suppressedErrorCount > 0) {
+                logger.warn("[{}] {} error (suppressed {} similar errors): {}",
+                        threadName, operation, suppressedErrorCount, message);
+            } else {
+                logger.warn("[{}] {} error: {}", threadName, operation, message);
+            }
+            lastErrorLogTime = now;
+            suppressedErrorCount = 0;
+        } else {
+            suppressedErrorCount++;
+            logger.debug("[{}] {} error: {}", threadName, operation, message);
+        }
     }
 
     private boolean executeInsert(Connection conn) {
         long startTime = System.nanoTime();
         try {
             String threadId = threadName;
-            String randomData = generateRandomData(500);
+            String randomData = dbAdapter.generateRandomData(500);
 
             if (batchSize > 1) {
                 int count = dbAdapter.executeBatchInsert(conn, threadId, batchSize);
@@ -73,7 +100,7 @@ public class LoadTestWorker implements Callable<Integer> {
             transactionCount++;
             return true;
         } catch (SQLException e) {
-            logger.error("[{}] Insert error: {}", threadName, e.getMessage());
+            logError("Insert", e.getMessage());
             perfCounter.incrementError();
             dbAdapter.rollback(conn);
             return false;
@@ -91,7 +118,7 @@ public class LoadTestWorker implements Callable<Integer> {
             transactionCount++;
             return true;
         } catch (SQLException e) {
-            logger.error("[{}] Select error: {}", threadName, e.getMessage());
+            logError("Select", e.getMessage());
             perfCounter.incrementError();
             return false;
         }
@@ -101,10 +128,11 @@ public class LoadTestWorker implements Callable<Integer> {
         long startTime = System.nanoTime();
         try {
             long recordId = dbAdapter.getRandomId(maxId);
-            if (recordId > 0) {
-                dbAdapter.executeUpdate(conn, recordId);
-                dbAdapter.commit(conn);
+            if (recordId <= 0) {
+                return true;  // 데이터 없음, 스킵
             }
+            dbAdapter.executeUpdate(conn, recordId);
+            dbAdapter.commit(conn);
             perfCounter.incrementUpdate();
 
             double latencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
@@ -112,7 +140,7 @@ public class LoadTestWorker implements Callable<Integer> {
             transactionCount++;
             return true;
         } catch (SQLException e) {
-            logger.error("[{}] Update error: {}", threadName, e.getMessage());
+            logError("Update", e.getMessage());
             perfCounter.incrementError();
             dbAdapter.rollback(conn);
             return false;
@@ -123,10 +151,11 @@ public class LoadTestWorker implements Callable<Integer> {
         long startTime = System.nanoTime();
         try {
             long recordId = dbAdapter.getRandomId(maxId);
-            if (recordId > 0) {
-                dbAdapter.executeDelete(conn, recordId);
-                dbAdapter.commit(conn);
+            if (recordId <= 0) {
+                return true;  // 데이터 없음, 스킵
             }
+            dbAdapter.executeDelete(conn, recordId);
+            dbAdapter.commit(conn);
             perfCounter.incrementDelete();
 
             double latencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
@@ -134,7 +163,7 @@ public class LoadTestWorker implements Callable<Integer> {
             transactionCount++;
             return true;
         } catch (SQLException e) {
-            logger.error("[{}] Delete error: {}", threadName, e.getMessage());
+            logError("Delete", e.getMessage());
             perfCounter.incrementError();
             dbAdapter.rollback(conn);
             return false;
@@ -159,7 +188,7 @@ public class LoadTestWorker implements Callable<Integer> {
         long startTime = System.nanoTime();
         try {
             String threadId = threadName;
-            String randomData = generateRandomData(500);
+            String randomData = dbAdapter.generateRandomData(500);
 
             // INSERT
             long newId = dbAdapter.executeInsert(conn, threadId, randomData);
@@ -180,7 +209,7 @@ public class LoadTestWorker implements Callable<Integer> {
             transactionCount++;
             return true;
         } catch (SQLException e) {
-            logger.error("[{}] Transaction error: {}", threadName, e.getMessage());
+            logError("Transaction", e.getMessage());
             perfCounter.incrementError();
             dbAdapter.rollback(conn);
             return false;
@@ -246,7 +275,7 @@ public class LoadTestWorker implements Callable<Integer> {
                 }
 
             } catch (Exception e) {
-                logger.error("[{}] Error: {}", threadName, e.getMessage());
+                logError("Connection", e.getMessage());
                 perfCounter.incrementError();
                 if (connection != null) {
                     dbAdapter.releaseConnection(connection, true);

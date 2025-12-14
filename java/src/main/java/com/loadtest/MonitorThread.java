@@ -57,19 +57,19 @@ public class MonitorThread extends Thread {
             String warmupIndicator = perfCounter.isWarmupPeriod() ? "[WARMUP] " : "";
 
             logger.info(
-                "[Monitor] {}TXN: {:,} | INS: {:,} | SEL: {:,} | UPD: {:,} | DEL: {:,} | ERR: {:,} | " +
-                "Avg TPS: {:.1f} | RT TPS: {:.1f} | Lat(p95/p99): {:.1f}/{:.1f}ms | Pool: {}/{}",
+                "[Monitor] {}TXN: {} | INS: {} | SEL: {} | UPD: {} | DEL: {} | ERR: {} | " +
+                "Avg TPS: {} | RT TPS: {} | Lat(p95/p99): {}/{}ms | Pool: {}/{}",
                 warmupIndicator,
-                stats.get("totalTransactions"),
-                stats.get("totalInserts"),
-                stats.get("totalSelects"),
-                stats.get("totalUpdates"),
-                stats.get("totalDeletes"),
-                stats.get("totalErrors"),
-                stats.get("avgTps"),
-                realtimeTps,
-                latencyStats.get("p95"),
-                latencyStats.get("p99"),
+                String.format("%,d", ((Number) stats.get("totalTransactions")).longValue()),
+                String.format("%,d", ((Number) stats.get("totalInserts")).longValue()),
+                String.format("%,d", ((Number) stats.get("totalSelects")).longValue()),
+                String.format("%,d", ((Number) stats.get("totalUpdates")).longValue()),
+                String.format("%,d", ((Number) stats.get("totalDeletes")).longValue()),
+                String.format("%,d", ((Number) stats.get("totalErrors")).longValue()),
+                String.format("%.2f", ((Number) stats.get("avgTps")).doubleValue()),
+                String.format("%.2f", realtimeTps),
+                String.format("%.1f", latencyStats.get("p95")),
+                String.format("%.1f", latencyStats.get("p99")),
                 poolStats.getOrDefault("poolActive", 0),
                 poolStats.getOrDefault("poolTotal", 0)
             );
