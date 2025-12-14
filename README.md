@@ -1,2 +1,373 @@
-# Multidb-HA-Workload-Testing
-기존 Multidb-Workload-Testing  에서 Connection Pool을 추가. 
+# Multi-Database Load Tester v2.1
+
+Oracle, PostgreSQL, MySQL, SQL Server, Tibero를 지원하는 고성능 멀티스레드 데이터베이스 부하 테스트 도구 (HikariCP 기반)
+
+## 주요 특징
+
+- **5개 데이터베이스 지원**: Oracle, PostgreSQL, MySQL, SQL Server, Tibero
+- **HikariCP 커넥션 풀**: 고성능 JDBC 커넥션 풀링
+- **고성능 멀티스레딩**: 최대 1000개 동시 세션 지원
+- **6가지 작업 모드**: full, insert-only, select-only, update-only, delete-only, mixed
+- **1초 이내 트랜잭션 측정**: Sub-second TPS 실시간 모니터링
+- **레이턴시 측정**: P50/P95/P99 응답시간 통계
+- **워밍업 기간**: 통계 제외 워밍업 지원
+- **점진적 부하 증가**: Ramp-up 기능
+- **TPS 제한**: Token Bucket 기반 Rate Limiting
+- **배치 INSERT**: 대량 데이터 삽입 최적화
+- **결과 내보내기**: CSV/JSON 형식 지원
+- **Graceful Shutdown**: Ctrl+C 안전 종료
+- **Leak Detection**: HikariCP 내장 커넥션 누수 감지
+
+---
+
+## 시스템 요구사항
+
+- Java JDK 17+
+- Maven 3.6+
+- 지원 데이터베이스:
+  - Oracle 19c+
+  - PostgreSQL 11+
+  - MySQL 5.7+
+  - SQL Server 2016+
+  - Tibero 6+
+
+---
+
+## 빠른 시작
+
+### 1. 빌드
+
+```bash
+cd java
+./build.sh
+```
+
+또는:
+
+```bash
+cd java
+mvn clean package -DskipTests
+```
+
+### 2. 실행
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type oracle \
+    --host localhost --port 1521 --sid XEPDB1 \
+    --user test_user --password test_pass \
+    --thread-count 100 --test-duration 60
+```
+
+### 3. 도움말
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar --help
+```
+
+---
+
+## 작업 모드 (--mode)
+
+| 모드 | 설명 | 사용 사례 |
+|------|------|----------|
+| `full` | INSERT → COMMIT → SELECT (기본값) | 데이터 무결성 검증 |
+| `insert-only` | INSERT → COMMIT만 | 최대 쓰기 처리량 측정 |
+| `select-only` | SELECT만 | 읽기 성능 측정 |
+| `update-only` | UPDATE → COMMIT | 업데이트 성능 측정 |
+| `delete-only` | DELETE → COMMIT | 삭제 성능 측정 |
+| `mixed` | INSERT/UPDATE/DELETE 혼합 (60:20:15:5) | 실제 워크로드 시뮬레이션 |
+
+---
+
+## 데이터베이스별 예제
+
+### Oracle
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type oracle \
+    --host 192.168.0.100 --port 1521 --sid ORCL \
+    --user test_user --password pass \
+    --thread-count 200 --test-duration 300
+```
+
+### PostgreSQL
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type postgresql \
+    --host localhost --port 5432 --database testdb \
+    --user test_user --password pass \
+    --thread-count 200
+```
+
+### MySQL
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type mysql \
+    --host localhost --port 3306 --database testdb \
+    --user root --password pass \
+    --thread-count 50
+```
+
+> **Note**: MySQL의 커넥션 풀 크기는 기본적으로 32개로 제한됩니다.
+
+### SQL Server
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type sqlserver \
+    --host localhost --port 1433 --database testdb \
+    --user sa --password pass \
+    --thread-count 200
+```
+
+### Tibero
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type tibero \
+    --host 192.168.0.140 --port 8629 --sid tibero \
+    --user test_user --password pass \
+    --thread-count 200
+```
+
+---
+
+## 고급 기능
+
+### 워밍업 + Ramp-up + Rate Limiting
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type postgresql \
+    --host localhost --port 5432 --database testdb \
+    --user test --password pass \
+    --warmup 30 \
+    --ramp-up 60 \
+    --target-tps 5000 \
+    --thread-count 200 --test-duration 300
+```
+
+### 배치 INSERT
+
+```bash
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type mysql \
+    --host localhost --port 3306 --database testdb \
+    --user root --password pass \
+    --mode insert-only \
+    --batch-size 100 \
+    --thread-count 50
+```
+
+### 결과 내보내기
+
+```bash
+# JSON 형식
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type oracle \
+    --host localhost --port 1521 --sid XEPDB1 \
+    --user test --password pass \
+    --output-format json \
+    --output-file results/test_result.json
+
+# CSV 형식
+java -jar java/target/multi-db-load-tester-2.1.0.jar \
+    --db-type oracle \
+    --host localhost --port 1521 --sid XEPDB1 \
+    --user test --password pass \
+    --output-format csv \
+    --output-file results/test_result.csv
+```
+
+---
+
+## 명령행 옵션
+
+### 필수 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `--db-type` | 데이터베이스 타입 (oracle, postgresql, mysql, sqlserver, tibero) |
+| `--host` | 데이터베이스 호스트 |
+| `--user` | 사용자명 |
+| `--password` | 비밀번호 |
+
+### 연결 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `--port` | 포트 번호 |
+| `--database` | 데이터베이스명 (PostgreSQL, MySQL, SQL Server) |
+| `--sid` | SID/서비스명 (Oracle, Tibero) |
+
+### 테스트 옵션
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `--thread-count` | 100 | 워커 스레드 수 |
+| `--test-duration` | 300 | 테스트 시간 (초) |
+| `--mode` | full | 작업 모드 |
+| `--skip-schema-setup` | false | 스키마 생성 스킵 |
+
+### 워밍업 및 부하 제어
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `--warmup` | 0 | 워밍업 기간 (초) |
+| `--ramp-up` | 0 | 점진적 부하 증가 기간 (초) |
+| `--target-tps` | 0 | 목표 TPS 제한 (0=무제한) |
+| `--batch-size` | 1 | 배치 INSERT 크기 |
+
+### HikariCP 풀 설정
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `--min-pool-size` | 100 | 최소 풀 크기 |
+| `--max-pool-size` | 200 | 최대 풀 크기 |
+| `--max-lifetime` | 1800 | 커넥션 최대 수명 (초, 30분) |
+| `--leak-detection-threshold` | 60 | Leak 감지 임계값 (초) |
+| `--idle-check-interval` | 30 | 유휴 커넥션 검사 주기 (초) |
+
+### 결과 출력
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `--output-format` | none | 결과 형식 (csv, json) |
+| `--output-file` | - | 결과 파일 경로 |
+| `--monitor-interval` | 5.0 | 모니터 출력 간격 (초) |
+| `--sub-second-interval` | 100 | Sub-second 측정 윈도우 (ms) |
+
+### 기타
+
+| 옵션 | 설명 |
+|------|------|
+| `--print-ddl` | DDL 스크립트 출력 후 종료 |
+| `-h, --help` | 도움말 출력 |
+| `-v, --version` | 버전 출력 |
+
+---
+
+## 실행 스크립트
+
+각 데이터베이스별 실행 스크립트가 제공됩니다:
+
+```bash
+cd java
+
+# 권한 부여
+chmod +x *.sh
+
+# 실행
+./run_oracle_test.sh
+./run_postgresql_test.sh
+./run_mysql_test.sh
+./run_sqlserver_test.sh
+./run_tibero_test.sh
+```
+
+환경 변수로 설정 가능:
+
+```bash
+export ORACLE_HOST=192.168.0.100
+export ORACLE_PORT=1521
+export ORACLE_SID=ORCL
+export ORACLE_USER=test_user
+export ORACLE_PASSWORD=test_pass
+export THREAD_COUNT=200
+export TEST_DURATION=300
+
+./run_oracle_test.sh
+```
+
+---
+
+## 모니터링 출력 예시
+
+```
+[Monitor] TXN: 45,230 | INS: 45,230 | SEL: 45,230 | UPD: 0 | DEL: 0 | ERR: 0 |
+Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
+```
+
+---
+
+## Tibero JDBC 드라이버 설치
+
+Tibero JDBC 드라이버는 Maven Central에 없으므로 수동 설치가 필요합니다:
+
+```bash
+mvn install:install-file \
+    -Dfile=tibero7-jdbc.jar \
+    -DgroupId=com.tmax.tibero \
+    -DartifactId=tibero-jdbc \
+    -Dversion=7.0 \
+    -Dpackaging=jar
+```
+
+설치 후 pom.xml에 의존성 추가:
+
+```xml
+<dependency>
+    <groupId>com.tmax.tibero</groupId>
+    <artifactId>tibero-jdbc</artifactId>
+    <version>7.0</version>
+</dependency>
+```
+
+---
+
+## 문제 해결
+
+### HikariCP 커넥션 풀 오류
+- `--max-pool-size` 값이 데이터베이스 `max_connections` 설정보다 작은지 확인
+- 네트워크 연결 및 방화벽 설정 확인
+
+### Leak Detection 경고
+- 트랜잭션 처리 시간이 `--leak-detection-threshold`를 초과하는 경우
+- 장시간 트랜잭션이 예상되는 경우 임계값 증가
+
+### MySQL 풀 크기 제한
+- MySQL은 기본적으로 최대 32개 커넥션으로 제한됨
+- MySQL 서버의 `max_connections` 설정도 함께 조정 필요
+
+### OutOfMemoryError
+- JVM 힙 크기 증가: `-Xmx4g`
+- 스레드 수 감소
+
+---
+
+## 프로젝트 구조
+
+```
+.
+├── README.md                          # 이 파일
+└── java/                              # Java 소스
+    ├── pom.xml                        # Maven 빌드 설정
+    ├── build.sh                       # 빌드 스크립트
+    ├── run_*_test.sh                  # 실행 스크립트
+    └── src/main/java/com/loadtest/
+        ├── MultiDBLoadTester.java     # 메인 클래스
+        ├── DatabaseAdapter.java       # DB 어댑터 인터페이스
+        ├── AbstractDatabaseAdapter.java # HikariCP 기반 추상 클래스
+        ├── OracleAdapter.java         # Oracle 어댑터
+        ├── PostgreSQLAdapter.java     # PostgreSQL 어댑터
+        ├── MySQLAdapter.java          # MySQL 어댑터
+        ├── SQLServerAdapter.java      # SQL Server 어댑터
+        ├── TiberoAdapter.java         # Tibero 어댑터
+        ├── LoadTestWorker.java        # 부하 테스트 워커
+        ├── MonitorThread.java         # 모니터링 스레드
+        ├── PerformanceCounter.java    # 성능 카운터
+        ├── RateLimiter.java           # Rate Limiter
+        ├── ResultExporter.java        # 결과 내보내기
+        ├── DatabaseConfig.java        # DB 설정
+        └── WorkMode.java              # 작업 모드
+```
+
+---
+
+## 라이선스
+
+MIT License

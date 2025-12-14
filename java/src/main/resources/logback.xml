@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} - [%15.15thread] - %-5level - %msg%n"/>
+
+    <!-- Console Appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>multi_db_load_test_hikari.log</file>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- HikariCP Logger - reduce verbosity -->
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+    <logger name="com.zaxxer.hikari.HikariConfig" level="DEBUG"/>
+    <logger name="com.zaxxer.hikari.pool.HikariPool" level="INFO"/>
+
+    <!-- JDBC Driver Loggers -->
+    <logger name="oracle.jdbc" level="WARN"/>
+    <logger name="org.postgresql" level="WARN"/>
+    <logger name="com.mysql" level="WARN"/>
+    <logger name="com.microsoft.sqlserver" level="WARN"/>
+
+    <!-- Application Logger -->
+    <logger name="com.loadtest" level="INFO"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
