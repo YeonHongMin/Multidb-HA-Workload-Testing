@@ -204,6 +204,16 @@ public class LoadTestWorker implements Callable<Integer> {
                 return false;
             }
 
+            // UPDATE
+            dbAdapter.executeUpdate(conn, newId);
+            perfCounter.incrementUpdate();
+            dbAdapter.commit(conn);
+
+            // DELETE
+            dbAdapter.executeDelete(conn, newId);
+            perfCounter.incrementDelete();
+            dbAdapter.commit(conn);
+
             double latencyMs = (System.nanoTime() - startTime) / 1_000_000.0;
             perfCounter.recordTransaction(latencyMs);
             transactionCount++;
@@ -240,15 +250,16 @@ public class LoadTestWorker implements Callable<Integer> {
                 if (connection == null) {
                     connection = dbAdapter.getConnection();
                     consecutiveErrors = 0;
+                }
 
-                    // For modes that need existing data, check maxId
-                    if ((mode == WorkMode.SELECT_ONLY || mode == WorkMode.UPDATE_ONLY ||
-                         mode == WorkMode.DELETE_ONLY || mode == WorkMode.MIXED) && maxId == 0) {
-                        maxId = dbAdapter.getMaxId(connection);
-                        if (maxId == 0) {
-                            Thread.sleep(1000);
-                            continue;
-                        }
+                // For modes that need existing data, check maxId (매 100회마다 갱신)
+                boolean needsData = (mode == WorkMode.SELECT_ONLY || mode == WorkMode.UPDATE_ONLY ||
+                                     mode == WorkMode.DELETE_ONLY || mode == WorkMode.MIXED);
+                if (needsData && (maxId == 0 || transactionCount % 100 == 0)) {
+                    maxId = dbAdapter.getMaxId(connection);
+                    if (maxId == 0) {
+                        Thread.sleep(1000);
+                        continue;
                     }
                 }
 

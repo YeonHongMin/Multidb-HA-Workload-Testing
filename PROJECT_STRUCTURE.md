@@ -2,7 +2,7 @@
 
 ## 개요
 
-**버전**: 2.1.0
+**버전**: 0.1
 **언어**: Java 17
 **빌드 도구**: Maven
 **목적**: HikariCP 커넥션 풀링을 활용한 엔터프라이즈급 다중 데이터베이스 부하 테스트 도구
@@ -49,7 +49,7 @@ Multidb-HA-Workload-Testing/
     │
     └── target/                         # 빌드 출력
         ├── classes/                    # 컴파일된 .class 파일
-        └── multi-db-load-tester-2.1.0.jar  # 실행 가능한 JAR (~18MB)
+        └── multi-db-load-tester-0.1.jar  # 실행 가능한 JAR (~19MB)
 ```
 
 ## 핵심 컴포넌트
@@ -84,7 +84,7 @@ Multidb-HA-Workload-Testing/
 
 | 모드 | 설명 | 사용 사례 |
 |------|------|-----------|
-| `FULL` | INSERT → COMMIT → SELECT (검증) | 데이터 무결성 테스트 |
+| `FULL` | INSERT → SELECT → UPDATE → DELETE | 전체 CRUD 사이클 테스트 |
 | `INSERT_ONLY` | INSERT → COMMIT | 최대 쓰기 처리량 |
 | `SELECT_ONLY` | SELECT만 수행 | 읽기 성능 테스트 |
 | `UPDATE_ONLY` | UPDATE → COMMIT | 업데이트 처리량 |
@@ -141,7 +141,7 @@ Multidb-HA-Workload-Testing/
 │                                                                 │
 │  8. 메인 테스트 단계 (--test-duration N초)                      │
 │     ├── LoadTestWorker 스레드들이 트랜잭션 실행                 │
-│     └── MonitorThread가 5초마다 보고                            │
+│     └── MonitorThread가 1초마다 보고                            │
 │                                                                 │
 │  9. 우아한 종료 (Ctrl+C)                                        │
 │     └── 진행 중인 트랜잭션 완료                                 │
@@ -164,12 +164,12 @@ LoadTestWorker.call()
     ├── 속도 제한: rateLimiter.acquire()
     │
     ├── 트랜잭션 실행 (WorkMode 기반):
-    │   ├── FULL: INSERT → SELECT → 검증
+    │   ├── FULL: INSERT → SELECT → UPDATE → DELETE
     │   ├── INSERT_ONLY: INSERT (배치 지원)
     │   ├── SELECT_ONLY: 랜덤 SELECT
     │   ├── UPDATE_ONLY: 랜덤 UPDATE
     │   ├── DELETE_ONLY: 랜덤 DELETE
-    │   └── MIXED: 확률 기반 선택
+    │   └── MIXED: 확률 기반 선택 (60:20:15:5)
     │
     ├── 메트릭 기록: 레이턴시, TPS
     │
@@ -180,9 +180,11 @@ LoadTestWorker.call()
 ## 모니터링 출력
 
 ```
-[Monitor] TXN: 45,230 | INS: 45,230 | SEL: 45,230 | UPD: 0 | DEL: 0 | ERR: 0 |
+[Monitor] TXN: 45,230 | INS: 45,230 | SEL: 45,230 | UPD: 45,230 | DEL: 45,230 | ERR: 0 |
 Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
 ```
+
+> **Note**: `--mode full` 사용 시 모든 CRUD 작업이 수행됩니다.
 
 | 메트릭 | 설명 |
 |--------|------|
@@ -201,7 +203,7 @@ Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
 cd java && mvn clean package
 
 # Oracle 부하 테스트 실행
-java -jar target/multi-db-load-tester-2.1.0.jar \
+java -jar target/multi-db-load-tester-0.1.jar \
     --db-type oracle \
     --host 192.168.0.100 \
     --port 1521 \

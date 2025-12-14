@@ -2,8 +2,6 @@
 
 Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2를 지원하는 고성능 멀티스레드 데이터베이스 부하 테스트 도구 (HikariCP 기반)
 
-## 아직 Update/Delete 는 미구성.
-
 ## 주요 특징
 
 - **6개 데이터베이스 지원**: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2
@@ -241,6 +239,7 @@ EXEC sp_configure 'max server memory';
 | MySQL | 3306 | `firewall-cmd --add-port=3306/tcp --permanent` |
 | SQL Server | 1433 | `firewall-cmd --add-port=1433/tcp --permanent` |
 | Tibero | 8629 | `firewall-cmd --add-port=8629/tcp --permanent` |
+| IBM DB2 | 50000 | `firewall-cmd --add-port=50000/tcp --permanent` |
 
 #### 연결 테스트
 
@@ -272,13 +271,13 @@ nc -zv 192.168.0.100 1521
 
 ```bash
 # 기본 실행 (2GB 힙)
-java -Xms1g -Xmx2g -jar multi-db-load-tester-2.1.0.jar ...
+java -Xms1g -Xmx2g -jar multi-db-load-tester-0.1.jar ...
 
 # 고부하 테스트 (4GB 힙, 500+ 스레드)
-java -Xms2g -Xmx4g -jar multi-db-load-tester-2.1.0.jar ...
+java -Xms2g -Xmx4g -jar multi-db-load-tester-0.1.jar ...
 
 # 초고부하 테스트 (8GB 힙, 1000+ 스레드)
-java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-2.1.0.jar ...
+java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-0.1.jar ...
 ```
 
 #### 스레드 수에 따른 권장 리소스
@@ -357,7 +356,7 @@ mvn clean package -DskipTests
 ### 2. 실행
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test_user --password test_pass \
@@ -367,7 +366,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 ### 3. 도움말
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar --help
+java -jar java/target/multi-db-load-tester-0.1.jar --help
 ```
 
 ---
@@ -376,12 +375,51 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar --help
 
 | 모드 | 설명 | 사용 사례 |
 |------|------|----------|
-| `full` | INSERT → COMMIT → SELECT (기본값) | 데이터 무결성 검증 |
+| `full` | INSERT → SELECT → UPDATE → DELETE (기본값) | 전체 CRUD 사이클 검증 |
 | `insert-only` | INSERT → COMMIT만 | 최대 쓰기 처리량 측정 |
 | `select-only` | SELECT만 | 읽기 성능 측정 |
 | `update-only` | UPDATE → COMMIT | 업데이트 성능 측정 |
 | `delete-only` | DELETE → COMMIT | 삭제 성능 측정 |
 | `mixed` | INSERT/UPDATE/DELETE 혼합 (60:20:15:5) | 실제 워크로드 시뮬레이션 |
+
+### ⚠️ 주의: update-only / delete-only / select-only 모드 사용 시
+
+`update-only`, `delete-only`, `select-only` 모드는 **기존 데이터가 필요**합니다.
+
+기본적으로 테스트 시작 시 `setupSchema()`가 실행되어 **테이블이 DROP 후 재생성**됩니다.
+따라서 기존 데이터를 유지하려면 반드시 `--skip-schema-setup` 옵션을 사용해야 합니다.
+
+#### 올바른 사용 예시
+
+```bash
+# 1단계: insert-only로 데이터 삽입 (테이블 생성됨)
+java -jar target/multi-db-load-tester-0.1.jar \
+    --db-type oracle \
+    --host 192.168.0.100 --port 1521 --sid ORCL \
+    --user test --password pass \
+    --mode insert-only \
+    --test-duration 60
+
+# 2단계: update-only 실행 (--skip-schema-setup 필수!)
+java -jar target/multi-db-load-tester-0.1.jar \
+    --db-type oracle \
+    --host 192.168.0.100 --port 1521 --sid ORCL \
+    --user test --password pass \
+    --mode update-only \
+    --skip-schema-setup \
+    --test-duration 60
+
+# 3단계: delete-only 실행 (--skip-schema-setup 필수!)
+java -jar target/multi-db-load-tester-0.1.jar \
+    --db-type oracle \
+    --host 192.168.0.100 --port 1521 --sid ORCL \
+    --user test --password pass \
+    --mode delete-only \
+    --skip-schema-setup \
+    --test-duration 60
+```
+
+> **Note**: `--skip-schema-setup` 옵션 없이 `update-only` 또는 `delete-only`를 실행하면 테이블이 비어있어 작업이 수행되지 않습니다.
 
 ---
 
@@ -390,7 +428,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar --help
 ### Oracle
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test_user --password pass \
@@ -400,7 +438,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 ### PostgreSQL
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type postgresql \
     --host localhost --port 5432 --database testdb \
     --user test_user --password pass \
@@ -410,7 +448,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 ### MySQL
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type mysql \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
@@ -422,7 +460,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 ### SQL Server
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type sqlserver \
     --host localhost --port 1433 --database testdb \
     --user sa --password pass \
@@ -432,7 +470,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 ### Tibero
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type tibero \
     --host 192.168.0.140 --port 8629 --sid tibero \
     --user test_user --password pass \
@@ -442,7 +480,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 ### IBM DB2
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type db2 \
     --host localhost --port 50000 --database testdb \
     --user db2inst1 --password pass \
@@ -456,7 +494,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 ### 워밍업 + Ramp-up + Rate Limiting
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type postgresql \
     --host localhost --port 5432 --database testdb \
     --user test --password pass \
@@ -469,7 +507,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 ### 배치 INSERT
 
 ```bash
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type mysql \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
@@ -482,7 +520,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 
 ```bash
 # JSON 형식
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -490,7 +528,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
     --output-file results/test_result.json
 
 # CSV 형식
-java -jar java/target/multi-db-load-tester-2.1.0.jar \
+java -jar java/target/multi-db-load-tester-0.1.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -516,7 +554,7 @@ java -jar java/target/multi-db-load-tester-2.1.0.jar \
 | 옵션 | 설명 |
 |------|------|
 | `--port` | 포트 번호 |
-| `--database` | 데이터베이스명 (PostgreSQL, MySQL, SQL Server) |
+| `--database` | 데이터베이스명 (PostgreSQL, MySQL, SQL Server, DB2) |
 | `--sid` | SID/서비스명 (Oracle, Tibero) |
 
 ### 테스트 옵션
@@ -604,9 +642,11 @@ export TEST_DURATION=300
 ## 모니터링 출력 예시
 
 ```
-[Monitor] TXN: 45,230 | INS: 45,230 | SEL: 45,230 | UPD: 0 | DEL: 0 | ERR: 0 |
+[Monitor] TXN: 45,230 | INS: 45,230 | SEL: 45,230 | UPD: 45,230 | DEL: 45,230 | ERR: 0 |
 Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
 ```
+
+> **Note**: `--mode full` 사용 시 INSERT, SELECT, UPDATE, DELETE가 모두 수행됩니다.
 
 ---
 

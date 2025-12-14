@@ -2,7 +2,7 @@
 # Oracle Load Test Script (HikariCP)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-JAR_FILE="$SCRIPT_DIR/target/multi-db-load-tester-2.1.0.jar"
+JAR_FILE="$SCRIPT_DIR/target/multi-db-load-tester-0.1.jar"
 
 # Default values - modify as needed
 ORACLE_HOST="${ORACLE_HOST:-localhost}"

@@ -77,13 +77,13 @@ echo ""
 echo "Running Maven build..."
 mvn clean package -DskipTests
 
-if [ -f "target/multi-db-load-tester-2.1.0.jar" ]; then
+if [ -f "target/multi-db-load-tester-0.1.jar" ]; then
     echo ""
     echo "=========================================="
     echo "Build successful!"
     echo "=========================================="
-    echo "JAR file: target/multi-db-load-tester-2.1.0.jar"
-    echo "Size: $(ls -lh target/multi-db-load-tester-2.1.0.jar | awk '{print $5}')"
+    echo "JAR file: target/multi-db-load-tester-0.1.jar"
+    echo "Size: $(ls -lh target/multi-db-load-tester-0.1.jar | awk '{print $5}')"
     echo ""
     echo "Included JDBC drivers:"
     echo "  - Oracle (ojdbc10)"
@@ -94,7 +94,7 @@ if [ -f "target/multi-db-load-tester-2.1.0.jar" ]; then
     echo "  - IBM DB2 (jcc-12.1.3.0)"
     echo ""
     echo "Usage example:"
-    echo "  java -jar target/multi-db-load-tester-2.1.0.jar --help"
+    echo "  java -jar target/multi-db-load-tester-0.1.jar --help"
     echo ""
 else
     echo "Build failed!"
