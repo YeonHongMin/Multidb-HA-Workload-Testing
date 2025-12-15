@@ -35,6 +35,8 @@ public class MySQLAdapter extends AbstractDatabaseAdapter {
                 .maxLifetimeSeconds(config.getMaxLifetimeSeconds())
                 .leakDetectionThresholdSeconds(config.getLeakDetectionThresholdSeconds())
                 .idleCheckIntervalSeconds(config.getIdleCheckIntervalSeconds())
+                .idleTimeoutSeconds(config.getIdleTimeoutSeconds())
+                .keepaliveTimeSeconds(config.getKeepaliveTimeSeconds())
                 .connectionTimeoutMs(config.getConnectionTimeoutMs())
                 .validationTimeoutMs(config.getValidationTimeoutMs())
                 .build();
@@ -179,8 +181,20 @@ public class MySQLAdapter extends AbstractDatabaseAdapter {
     @Override
     public void setupSchema(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
-            // 기존 테이블 삭제
-            stmt.execute("DROP TABLE IF EXISTS load_test");
+            // 테이블 존재 여부 확인
+            boolean tableExists = false;
+            try (ResultSet rs = stmt.executeQuery(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'load_test'")) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    tableExists = true;
+                }
+            }
+
+            if (tableExists) {
+                logger.info("MySQL schema already exists - reusing existing schema");
+                logger.info("  (DROP TABLE load_test to recreate, or use --truncate to clear data only)");
+                return;
+            }
 
             // 테이블 생성
             stmt.execute("""
@@ -199,6 +213,16 @@ public class MySQLAdapter extends AbstractDatabaseAdapter {
 
             conn.commit();
             logger.info("MySQL schema created successfully");
+        }
+    }
+
+    @Override
+    public void truncateTable(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            // TRUNCATE TABLE automatically resets AUTO_INCREMENT in MySQL
+            stmt.execute("TRUNCATE TABLE load_test");
+            conn.commit();
+            logger.info("Table load_test truncated and AUTO_INCREMENT reset to 1");
         }
     }
 }

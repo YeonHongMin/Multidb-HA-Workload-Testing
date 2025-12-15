@@ -40,7 +40,8 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 
         // 커넥션 수명 설정
         hikariConfig.setMaxLifetime(TimeUnit.SECONDS.toMillis(config.getMaxLifetimeSeconds()));
-        hikariConfig.setIdleTimeout(TimeUnit.SECONDS.toMillis(config.getIdleCheckIntervalSeconds() * 10));
+        hikariConfig.setIdleTimeout(TimeUnit.SECONDS.toMillis(config.getIdleTimeoutSeconds()));
+        hikariConfig.setKeepaliveTime(TimeUnit.SECONDS.toMillis(config.getKeepaliveTimeSeconds()));
 
         // Leak 감지 설정
         hikariConfig.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(config.getLeakDetectionThresholdSeconds()));
@@ -62,6 +63,8 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
         logger.info("  - Min Pool Size: {}", config.getMinPoolSize());
         logger.info("  - Max Pool Size: {}", config.getMaxPoolSize());
         logger.info("  - Max Lifetime: {}s", config.getMaxLifetimeSeconds());
+        logger.info("  - Idle Timeout: {}s", config.getIdleTimeoutSeconds());
+        logger.info("  - Keepalive Time: {}s", config.getKeepaliveTimeSeconds());
         logger.info("  - Leak Detection Threshold: {}s", config.getLeakDetectionThresholdSeconds());
 
         this.dataSource = new HikariDataSource(hikariConfig);
@@ -157,5 +160,14 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
         return sb.toString();
+    }
+
+    @Override
+    public void truncateTable(Connection conn) throws SQLException {
+        try (java.sql.Statement stmt = conn.createStatement()) {
+            stmt.execute("TRUNCATE TABLE LOAD_TEST");
+            conn.commit();
+            logger.info("Table LOAD_TEST truncated successfully");
+        }
     }
 }

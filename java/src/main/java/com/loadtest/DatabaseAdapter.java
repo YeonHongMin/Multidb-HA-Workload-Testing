@@ -97,6 +97,11 @@ public interface DatabaseAdapter {
     void setupSchema(Connection conn) throws SQLException;
 
     /**
+     * 테이블 TRUNCATE (데이터 삭제, 스키마 유지)
+     */
+    void truncateTable(Connection conn) throws SQLException;
+
+    /**
      * JDBC URL 생성
      */
     String buildJdbcUrl(DatabaseConfig config);

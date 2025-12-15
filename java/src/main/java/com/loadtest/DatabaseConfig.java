@@ -16,6 +16,8 @@ public class DatabaseConfig {
     private int maxLifetimeSeconds = 1800;  // 30분
     private int leakDetectionThresholdSeconds = 60;
     private int idleCheckIntervalSeconds = 30;
+    private int idleTimeoutSeconds = 30;  // 유휴 커넥션 제거 시간
+    private int keepaliveTimeSeconds = 30;  // 유휴 커넥션 검증 주기 (HikariCP 최소값: 30초)
     private int connectionTimeoutMs = 30000;
     private int validationTimeoutMs = 5000;
 
@@ -93,6 +95,16 @@ public class DatabaseConfig {
 
         public Builder idleCheckIntervalSeconds(int idleCheckIntervalSeconds) {
             config.idleCheckIntervalSeconds = idleCheckIntervalSeconds;
+            return this;
+        }
+
+        public Builder idleTimeoutSeconds(int idleTimeoutSeconds) {
+            config.idleTimeoutSeconds = idleTimeoutSeconds;
+            return this;
+        }
+
+        public Builder keepaliveTimeSeconds(int keepaliveTimeSeconds) {
+            config.keepaliveTimeSeconds = keepaliveTimeSeconds;
             return this;
         }
 
@@ -206,6 +218,22 @@ public class DatabaseConfig {
 
     public void setIdleCheckIntervalSeconds(int idleCheckIntervalSeconds) {
         this.idleCheckIntervalSeconds = idleCheckIntervalSeconds;
+    }
+
+    public int getIdleTimeoutSeconds() {
+        return idleTimeoutSeconds;
+    }
+
+    public void setIdleTimeoutSeconds(int idleTimeoutSeconds) {
+        this.idleTimeoutSeconds = idleTimeoutSeconds;
+    }
+
+    public int getKeepaliveTimeSeconds() {
+        return keepaliveTimeSeconds;
+    }
+
+    public void setKeepaliveTimeSeconds(int keepaliveTimeSeconds) {
+        this.keepaliveTimeSeconds = keepaliveTimeSeconds;
     }
 
     public int getConnectionTimeoutMs() {

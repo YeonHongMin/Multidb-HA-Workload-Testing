@@ -30,6 +30,9 @@ public class LoadTestWorker implements Callable<Integer> {
     private int transactionCount = 0;
     private long lastErrorLogTime = 0;
     private int suppressedErrorCount = 0;
+    private static final int MAX_CONNECTION_RETRIES = 3;
+    private static final long MAX_BACKOFF_MS = 5000;  // 최대 백오프 5초
+    private long currentBackoffMs = 100;  // 초기 백오프 100ms
 
     public LoadTestWorker(int workerId, DatabaseAdapter dbAdapter, Instant endTime,
                           WorkMode mode, long maxIdCache, int batchSize,
@@ -44,6 +47,56 @@ public class LoadTestWorker implements Callable<Integer> {
         this.perfCounter = perfCounter;
         this.shutdownRequested = shutdownRequested;
         this.threadName = String.format("Worker-%04d", workerId);
+    }
+
+    /**
+     * 유효한 커넥션 획득 (재시도 + 지수 백오프 로직 포함)
+     * DB 재시작 시 풀에서 죽은 커넥션을 가져올 수 있으므로 유효성 검증 후 반환
+     */
+    private Connection getValidConnection() throws SQLException {
+        for (int retry = 0; retry < MAX_CONNECTION_RETRIES; retry++) {
+            try {
+                Connection conn = dbAdapter.getConnection();
+                try {
+                    if (conn.isValid(2)) {
+                        // 성공 시 백오프 리셋
+                        currentBackoffMs = 100;
+                        return conn;
+                    }
+                    logger.debug("[{}] Got invalid connection from pool, retry {}/{}",
+                            threadName, retry + 1, MAX_CONNECTION_RETRIES);
+                    dbAdapter.releaseConnection(conn, true);
+                    perfCounter.incrementConnectionRecreate();
+                } catch (SQLException e) {
+                    logger.debug("[{}] Connection validation failed: {}", threadName, e.getMessage());
+                    dbAdapter.releaseConnection(conn, true);
+                    perfCounter.incrementConnectionRecreate();
+                }
+            } catch (SQLException e) {
+                // 커넥션 획득 실패 (DB 다운 등)
+                logger.debug("[{}] Failed to get connection: {}", threadName, e.getMessage());
+            }
+
+            // 지수 백오프 적용 (재시도 전 대기)
+            if (retry < MAX_CONNECTION_RETRIES - 1) {
+                try {
+                    Thread.sleep(currentBackoffMs);
+                    currentBackoffMs = Math.min(currentBackoffMs * 2, MAX_BACKOFF_MS);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new SQLException("Interrupted while waiting for connection");
+                }
+            }
+        }
+        // 마지막 시도 - 예외 발생 허용
+        return dbAdapter.getConnection();
+    }
+
+    /**
+     * 백오프 리셋 (성공적인 트랜잭션 후 호출)
+     */
+    private void resetBackoff() {
+        currentBackoffMs = 100;
     }
 
     /**
@@ -247,9 +300,25 @@ public class LoadTestWorker implements Callable<Integer> {
             }
 
             try {
+                // 커넥션 획득 및 유효성 검증
                 if (connection == null) {
-                    connection = dbAdapter.getConnection();
+                    connection = getValidConnection();
                     consecutiveErrors = 0;
+                } else {
+                    // 기존 커넥션 유효성 검증 (DB 재시작 대응)
+                    try {
+                        if (!connection.isValid(2)) {
+                            logger.debug("[{}] Connection invalid, getting new one", threadName);
+                            dbAdapter.releaseConnection(connection, true);
+                            connection = getValidConnection();
+                            perfCounter.incrementConnectionRecreate();
+                        }
+                    } catch (SQLException e) {
+                        logger.debug("[{}] Connection validation failed: {}", threadName, e.getMessage());
+                        dbAdapter.releaseConnection(connection, true);
+                        connection = getValidConnection();
+                        perfCounter.incrementConnectionRecreate();
+                    }
                 }
 
                 // For modes that need existing data, check maxId (매 100회마다 갱신)
@@ -275,14 +344,18 @@ public class LoadTestWorker implements Callable<Integer> {
 
                 if (!success) {
                     consecutiveErrors++;
-                    if (consecutiveErrors >= 5) {
+                    // 연속 에러 시 커넥션 재생성 (임계값 감소: 5 → 2)
+                    if (consecutiveErrors >= 2) {
                         dbAdapter.releaseConnection(connection, true);
                         connection = null;
                         perfCounter.incrementConnectionRecreate();
-                        Thread.sleep(500);
+                        // 지수 백오프 적용
+                        Thread.sleep(currentBackoffMs);
+                        currentBackoffMs = Math.min(currentBackoffMs * 2, MAX_BACKOFF_MS);
                     }
                 } else {
                     consecutiveErrors = 0;
+                    resetBackoff();  // 성공 시 백오프 리셋
                 }
 
             } catch (Exception e) {
@@ -294,7 +367,9 @@ public class LoadTestWorker implements Callable<Integer> {
                     perfCounter.incrementConnectionRecreate();
                 }
                 try {
-                    Thread.sleep(500);
+                    // 지수 백오프 적용
+                    Thread.sleep(currentBackoffMs);
+                    currentBackoffMs = Math.min(currentBackoffMs * 2, MAX_BACKOFF_MS);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     break;

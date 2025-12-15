@@ -128,8 +128,11 @@ Multidb-HA-Workload-Testing/
 │  3. HikariCP 커넥션 풀 초기화                                    │
 │     └── 최소: 100, 최대: 200, 누수 감지: 60초                   │
 │                                                                 │
-│  4. 데이터베이스 스키마 설정 (--skip-schema-setup 없을 시)       │
-│     └── CREATE TABLE, SEQUENCE, INDEX                          │
+│  4. 데이터베이스 스키마 설정 (기존 스키마 자동 재사용)          │
+│     └── CREATE TABLE, SEQUENCE, INDEX (없을 경우에만)          │
+│                                                                 │
+│  4-1. [선택] 테이블 TRUNCATE (--truncate)                       │
+│     └── 데이터 삭제, 시퀀스/ID 리셋                            │
 │                                                                 │
 │  5. PerformanceCounter 및 RateLimiter 초기화                    │
 │                                                                 │

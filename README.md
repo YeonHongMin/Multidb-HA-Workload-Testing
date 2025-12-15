@@ -10,7 +10,8 @@ Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2를 지원하는 고성능
 - **6가지 작업 모드**: full, insert-only, select-only, update-only, delete-only, mixed
 - **1초 이내 트랜잭션 측정**: Sub-second TPS 실시간 모니터링
 - **레이턴시 측정**: P50/P95/P99 응답시간 통계
-- **워밍업 기간**: 통계 제외 워밍업 지원
+- **워밍업 기간**: 통계 제외 워밍업 지원 (기본 30초)
+- **스키마 재사용**: 기존 테이블/시퀀스 존재 시 자동 재사용
 - **점진적 부하 증가**: Ramp-up 기능
 - **TPS 제한**: Token Bucket 기반 Rate Limiting
 - **배치 INSERT**: 대량 데이터 삽입 최적화
@@ -356,15 +357,23 @@ mvn clean package -DskipTests
 ### 2. 실행
 
 ```bash
+# 기본 실행 (warmup 30초가 기본값)
+java -jar java/target/multi-db-load-tester-0.2.jar \
+    --db-type oracle \
+    --host localhost --port 1521 --sid XEPDB1 \
+    --user test_user --password test_pass \
+    --thread-count 100 --test-duration 60
+
+# warmup 없이 실행
 java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test_user --password test_pass \
     --thread-count 100 --test-duration 60 \
-    --warmup 30
+    --warmup 0
 ```
 
-> **Note**: `--warmup 30` 옵션은 처음 30초 동안을 워밍업 기간으로 설정하여 Avg TPS 계산에서 제외합니다.
+> **Note**: `--warmup` 기본값은 30초입니다. 워밍업 기간 동안의 트랜잭션은 Avg TPS 계산에서 제외됩니다.
 
 ### 3. 도움말
 
@@ -389,8 +398,8 @@ java -jar java/target/multi-db-load-tester-0.2.jar --help
 
 `update-only`, `delete-only`, `select-only` 모드는 **기존 데이터가 필요**합니다.
 
-기본적으로 테스트 시작 시 `setupSchema()`가 실행되어 **테이블이 DROP 후 재생성**됩니다.
-따라서 기존 데이터를 유지하려면 반드시 `--skip-schema-setup` 옵션을 사용해야 합니다.
+v0.2부터 테이블이 이미 존재하면 **자동으로 재사용**됩니다 (DROP 없음).
+따라서 별도 옵션 없이 연속 실행이 가능합니다.
 
 #### 올바른 사용 예시
 
@@ -403,26 +412,33 @@ java -jar target/multi-db-load-tester-0.2.jar \
     --mode insert-only \
     --test-duration 60 --warmup 10
 
-# 2단계: update-only 실행 (--skip-schema-setup 필수!)
+# 2단계: update-only 실행 (기존 데이터 자동 유지)
 java -jar target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
     --mode update-only \
-    --skip-schema-setup \
     --test-duration 60 --warmup 10
 
-# 3단계: delete-only 실행 (--skip-schema-setup 필수!)
+# 3단계: delete-only 실행 (기존 데이터 자동 유지)
 java -jar target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
     --mode delete-only \
-    --skip-schema-setup \
+    --test-duration 60 --warmup 10
+
+# 깨끗한 상태에서 시작하려면 --truncate 사용
+java -jar target/multi-db-load-tester-0.2.jar \
+    --db-type oracle \
+    --host 192.168.0.100 --port 1521 --sid ORCL \
+    --user test --password pass \
+    --mode insert-only \
+    --truncate \
     --test-duration 60 --warmup 10
 ```
 
-> **Note**: `--skip-schema-setup` 옵션 없이 `update-only` 또는 `delete-only`를 실행하면 테이블이 비어있어 작업이 수행되지 않습니다.
+> **Note**: 기존 데이터를 삭제하고 깨끗한 상태에서 시작하려면 `--truncate` 옵션을 사용하세요.
 
 ---
 
@@ -500,6 +516,20 @@ java -jar java/target/multi-db-load-tester-0.2.jar \
 
 ## 고급 기능
 
+### 테이블 초기화 후 테스트 (--truncate)
+
+```bash
+# 기존 데이터 삭제 후 깨끗한 상태에서 테스트 시작
+java -jar java/target/multi-db-load-tester-0.2.jar \
+    --db-type oracle \
+    --host localhost --port 1521 --sid XEPDB1 \
+    --user test --password pass \
+    --truncate \
+    --thread-count 100 --test-duration 60
+```
+
+> **Note**: `--truncate` 옵션은 테이블의 모든 데이터를 삭제하고 ID/시퀀스를 1부터 다시 시작합니다.
+
 ### 워밍업 + Ramp-up + Rate Limiting
 
 ```bash
@@ -573,13 +603,13 @@ java -jar java/target/multi-db-load-tester-0.2.jar \
 | `--thread-count` | 100 | 워커 스레드 수 |
 | `--test-duration` | 300 | 테스트 시간 (초) |
 | `--mode` | full | 작업 모드 |
-| `--skip-schema-setup` | false | 스키마 생성 스킵 |
+| `--truncate` | false | 테스트 전 테이블 TRUNCATE (데이터 삭제, 시퀀스/ID 리셋) |
 
 ### 워밍업 및 부하 제어
 
 | 옵션 | 기본값 | 설명 |
 |------|--------|------|
-| `--warmup` | 0 | 워밍업 기간 (초) |
+| `--warmup` | 30 | 워밍업 기간 (초), 0으로 설정 시 워밍업 없이 시작 |
 | `--ramp-up` | 0 | 점진적 부하 증가 기간 (초) |
 | `--target-tps` | 0 | 목표 TPS 제한 (0=무제한) |
 | `--batch-size` | 1 | 배치 INSERT 크기 |
@@ -593,6 +623,57 @@ java -jar java/target/multi-db-load-tester-0.2.jar \
 | `--max-lifetime` | 1800 | 커넥션 최대 수명 (초, 30분) |
 | `--leak-detection-threshold` | 60 | Leak 감지 임계값 (초) |
 | `--idle-check-interval` | 30 | 유휴 커넥션 검사 주기 (초) |
+| `--idle-timeout` | 30 | 유휴 커넥션 제거 시간 (초) |
+| `--keepalive-time` | 30 | 유휴 커넥션 검증 주기 (초, 최소 30초) |
+
+> **Note**: HikariCP는 `keepalive-time`이 30초 미만이면 자동으로 비활성화합니다. 30초 이상으로 설정해야 합니다.
+
+#### idle-timeout 설정 영향도
+
+| 설정 방향 | 장점 | 단점 |
+|----------|------|------|
+| **증가** | 커넥션 재사용률 증가, 커넥션 생성 비용 감소, 피크 타임 대응력 향상 | 메모리 사용량 증가, DB 세션 리소스 점유, 죽은 커넥션 잔류 가능성 |
+| **감소** | 리소스 효율화, DB 세션 빠른 반환 | 커넥션 재생성 빈도 증가, 트래픽 변동 시 성능 저하 |
+
+**환경별 권장값:**
+
+| 환경 | idle-timeout | 이유 |
+|------|--------------|------|
+| 트래픽 변동 큰 환경 | 300~600초 | 피크 대비 커넥션 유지 |
+| 안정적 트래픽 | 60~120초 | 리소스 효율화 |
+| DB 세션 제한 환경 | 30~60초 | DB 리소스 절약 |
+| 부하 테스트 | 600초+ | 커넥션 재생성 오버헤드 최소화 |
+
+> **Note**: `idle-timeout`은 `minPoolSize`를 초과하는 유휴 커넥션에만 적용됩니다.
+
+#### keepalive-time 설정 영향도
+
+| 설정 방향 | 장점 | 단점 |
+|----------|------|------|
+| **증가** | DB 부하 감소 (검증 쿼리 빈도 감소), 네트워크 트래픽 감소 | 죽은 커넥션 감지 지연, HA Failover 대응 지연 |
+| **감소** | 빠른 장애 감지, HA 환경 빠른 복구 | DB 부하 증가, 검증 쿼리 오버헤드 |
+
+**환경별 권장값:**
+
+| 환경 | keepalive-time | 이유 |
+|------|----------------|------|
+| HA/Failover 환경 | 30초 (기본값) | 빠른 장애 감지 필요 |
+| 안정적인 단일 DB | 60~120초 | DB 부하 감소 |
+| 방화벽 있는 환경 | 방화벽 타임아웃의 절반 이하 | 세션 끊김 방지 |
+
+> **Note**: 현재 구현은 Worker 레벨에서 `Connection.isValid()` 검증을 수행하므로, `keepalive-time`을 늘려도 트랜잭션에서 죽은 커넥션을 사용할 위험은 낮습니다.
+
+#### 설정 간 권장 관계
+
+```
+idle-timeout > keepalive-time (권장)
+```
+
+| 설정 | 역할 | 권장값 |
+|------|------|--------|
+| `keepalive-time` | 유휴 커넥션 검증 주기 | 30초 |
+| `idle-timeout` | 유휴 커넥션 제거 시간 | keepalive-time × 2~3 이상 |
+| `max-lifetime` | 커넥션 최대 수명 | 1800초 (30분) |
 
 ### 결과 출력
 
@@ -650,14 +731,41 @@ export TEST_DURATION=300
 
 ## 모니터링 출력 예시
 
-### Warmup 기간 중
+### 테스트 시작 시 (스키마 설정)
 ```
-[Monitor] [WARMUP] TXN: 1,234 | INS: 1,234 | SEL: 1,234 | UPD: 1,234 | DEL: 1,234 | ERR: 0 | Avg TPS: - | RT TPS: 1234.00 | Lat(p95/p99): 2.1/3.5ms | Pool: 95/100
+# 첫 실행 - 스키마 생성
+Setting up database schema...
+Tibero schema created successfully
+
+# 재실행 - 기존 스키마 재사용
+Setting up database schema...
+Tibero schema already exists - reusing existing schema
+  (DROP objects manually to recreate, or use --truncate to clear data only)
 ```
 
-### Warmup 종료 후
+### Warmup 기간 중
 ```
-[Monitor] TXN: 1,523 | INS: 1,523 | SEL: 1,523 | UPD: 1,523 | DEL: 1,523 | ERR: 0 | Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
+================================================================================
+Warmup period: 30 seconds (Avg TPS will be calculated after warmup)
+Total test duration: 30 seconds (warmup) + 120 seconds (measurement) = 150 seconds
+================================================================================
+[Monitor] [WARMUP]  TXN: 1,234 | INS: 1,234 | SEL: 1,234 | UPD: 1,234 | DEL: 1,234 | ERR: 0 | Avg TPS: - | RT TPS: 1234.00 | Lat(p95/p99): 2.1/3.5ms | Pool: 95/100
+```
+
+### Warmup 종료 후 (측정 기간)
+```
+================================================================================
+[Monitor] *** WARMUP COMPLETED *** Starting measurement phase...
+================================================================================
+[Monitor] [RUNNING] TXN: 1,523 | INS: 1,523 | SEL: 1,523 | UPD: 1,523 | DEL: 1,523 | ERR: 0 | Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
+```
+
+### Warmup 없이 실행 (--warmup 0)
+```
+================================================================================
+No warmup period. Test duration: 60 seconds
+================================================================================
+[Monitor] [RUNNING] TXN: 1,523 | INS: 1,523 | SEL: 1,523 | UPD: 1,523 | DEL: 1,523 | ERR: 0 | Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
 ```
 
 ### 출력 항목 설명
@@ -665,9 +773,10 @@ export TEST_DURATION=300
 | 항목 | 설명 |
 |------|------|
 | `[WARMUP]` | 워밍업 기간 중 표시 |
+| `[RUNNING]` | 측정 기간 중 표시 (워밍업 종료 후 또는 워밍업 없는 경우) |
 | `TXN/INS/SEL/UPD/DEL` | 해당 구간(interval) 동안의 변화량 (delta) |
 | `ERR` | 해당 구간 동안의 에러 수 |
-| `Avg TPS` | Warmup 이후의 평균 TPS (Warmup 중에는 `-` 표시) |
+| `Avg TPS` | 평균 TPS (Warmup 있으면 Post-Warmup TPS, 없으면 전체 평균) |
 | `RT TPS` | 실시간 TPS (최근 1초간 트랜잭션 수) |
 | `Lat(p95/p99)` | 응답시간 백분위수 (밀리초) |
 | `Pool` | 커넥션 풀 상태 (활성/전체) |
@@ -681,6 +790,27 @@ export TEST_DURATION=300
 ### HikariCP 커넥션 풀 오류
 - `--max-pool-size` 값이 데이터베이스 `max_connections` 설정보다 작은지 확인
 - 네트워크 연결 및 방화벽 설정 확인
+
+### DB 재시작 후 커넥션 복구
+
+**v0.2에서 개선된 사항:**
+- 워커가 커넥션 사용 전 `Connection.isValid()` 메서드로 유효성 검증
+- 유효하지 않은 커넥션 감지 시 즉시 새 커넥션 획득 (최대 3회 재시도)
+- 연속 에러 발생 시 빠른 커넥션 재생성 (임계값: 2회, 대기: 100ms)
+
+**HikariCP keepaliveTime 제한:**
+- HikariCP는 `keepalive-time`이 **30초 미만이면 비활성화**합니다
+- 30초 미만으로 설정하면 경고 메시지와 함께 무시됨:
+  ```
+  HikariPool-TIBERO - keepaliveTime is less than 30000ms, disabling it.
+  ```
+- 유휴 커넥션 검증이 필요하면 30초 이상으로 설정하세요
+
+**동작 원리:**
+1. 워커가 매 트랜잭션 전 `connection.isValid(2)` 호출 (2초 타임아웃)
+2. 유효하지 않으면 커넥션 해제 후 새 커넥션 획득
+3. 새 커넥션도 유효성 검증 후 사용 (최대 3회 재시도)
+4. DB 재시작 후 빠르게 새 커넥션으로 전환
 
 ### Leak Detection 경고
 - 트랜잭션 처리 시간이 `--leak-detection-threshold`를 초과하는 경우
@@ -730,15 +860,53 @@ export TEST_DURATION=300
 
 ### v0.2 (2025-12-15)
 
+**테이블 TRUNCATE 옵션 추가**
+- `--truncate`: 테스트 전 테이블 데이터 삭제 및 ID/시퀀스 리셋
+  - Oracle, Tibero, DB2: 시퀀스 DROP/CREATE로 1부터 재시작
+  - PostgreSQL: `TRUNCATE ... RESTART IDENTITY`
+  - MySQL: AUTO_INCREMENT 자동 리셋
+  - SQL Server: IDENTITY 자동 리셋
+
+**HikariCP 커넥션 관리 개선**
+- 유휴 커넥션 관리 옵션 추가:
+  - `--idle-timeout`: 유휴 커넥션 제거 시간 (기본값: 30초)
+  - `--keepalive-time`: 유휴 커넥션 검증 주기 (기본값: 30초, 최소 30초)
+- 시작 시 설정값 출력에 Idle Timeout, Keepalive Time 표시
+
+**DB 재시작 복구 개선**
+- 워커가 커넥션 사용 전 `Connection.isValid()` 로 유효성 검증
+- 유효하지 않은 커넥션 감지 시 즉시 새 커넥션 획득 (최대 3회 재시도)
+- 연속 에러 임계값 감소 (5회 → 2회) 및 대기 시간 단축 (500ms → 100ms)
+- DB 재시작 후 빠른 자동 복구 지원
+
 **모니터링 출력 개선**
 - 모니터링 출력이 누적 값에서 **구간별 변화량(delta)**으로 변경
   - TXN, INS, SEL, UPD, DEL, ERR: 이전 interval 대비 변화량 표시
+- 상태 표시 추가:
+  - `[WARMUP]`: 워밍업 기간 중
+  - `[RUNNING]`: 측정 기간 중 (워밍업 종료 후)
+- Warmup 기간 정보 로깅 개선:
+  - 시작 시: 워밍업 기간 및 총 테스트 시간 출력
+  - 종료 시: `*** WARMUP COMPLETED ***` 메시지 출력
 - Avg TPS가 **Warmup 기간을 제외**하고 계산
   - Warmup 중: `Avg TPS: -` 표시
-  - Warmup 후: Warmup 제외 평균 TPS 표시
+  - Warmup 후: Post-Warmup TPS 표시
+  - Warmup 없음: 전체 평균 TPS 표시
+
+**기본값 변경**
+- `--warmup` 기본값: `0` → `30` (30초 워밍업)
+
+**스키마 관리 개선**
+- 테이블/시퀀스가 이미 존재할 경우 **삭제하지 않고 재사용**
+- 기존 스키마 감지 시 메시지 출력:
+  ```
+  Tibero schema already exists - reusing existing schema
+    (DROP objects manually to recreate, or use --truncate to clear data only)
+  ```
+- 모든 DB 어댑터 적용: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, DB2
 
 **버그 수정**
-- `--warmup 0` (기본값) 사용 시에도 Avg TPS가 정상 계산되도록 수정
+- `--warmup 0` 사용 시 Avg TPS가 정상 출력되도록 수정
 
 ### v0.1 (2025-12-14)
 

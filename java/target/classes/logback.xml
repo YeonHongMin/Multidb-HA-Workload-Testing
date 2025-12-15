@@ -10,12 +10,12 @@
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
             <onMatch>DENY</onMatch>
-            <onMismatch>ACCEPT</onMismatch>
+            <onMismatch>NEUTRAL</onMismatch>
         </filter>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>WARN</level>
             <onMatch>DENY</onMatch>
-            <onMismatch>ACCEPT</onMismatch>
+            <onMismatch>NEUTRAL</onMismatch>
         </filter>
         <encoder>
             <pattern>${CONSOLE_PATTERN}</pattern>

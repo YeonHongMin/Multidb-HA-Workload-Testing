@@ -134,8 +134,20 @@ public class SQLServerAdapter extends AbstractDatabaseAdapter {
     @Override
     public void setupSchema(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
-            // 기존 테이블 삭제
-            stmt.execute("IF OBJECT_ID('load_test', 'U') IS NOT NULL DROP TABLE load_test");
+            // 테이블 존재 여부 확인
+            boolean tableExists = false;
+            try (ResultSet rs = stmt.executeQuery(
+                    "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'load_test'")) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    tableExists = true;
+                }
+            }
+
+            if (tableExists) {
+                logger.info("SQL Server schema already exists - reusing existing schema");
+                logger.info("  (DROP TABLE load_test to recreate, or use --truncate to clear data only)");
+                return;
+            }
 
             // 테이블 생성
             stmt.execute("""
@@ -155,6 +167,16 @@ public class SQLServerAdapter extends AbstractDatabaseAdapter {
 
             conn.commit();
             logger.info("SQL Server schema created successfully");
+        }
+    }
+
+    @Override
+    public void truncateTable(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            // TRUNCATE TABLE automatically resets IDENTITY in SQL Server
+            stmt.execute("TRUNCATE TABLE load_test");
+            conn.commit();
+            logger.info("Table load_test truncated and IDENTITY reset to 1");
         }
     }
 }

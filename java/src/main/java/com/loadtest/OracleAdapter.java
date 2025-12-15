@@ -146,13 +146,41 @@ public class OracleAdapter extends AbstractDatabaseAdapter {
     @Override
     public void setupSchema(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
-            // 기존 객체 삭제
-            try {
-                stmt.execute("DROP SEQUENCE LOAD_TEST_SEQ");
-            } catch (SQLException ignored) {}
-            try {
-                stmt.execute("DROP TABLE LOAD_TEST PURGE");
-            } catch (SQLException ignored) {}
+            // 테이블 존재 여부 확인
+            boolean tableExists = false;
+            boolean seqExists = false;
+
+            try (ResultSet rs = stmt.executeQuery(
+                    "SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME = 'LOAD_TEST'")) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    tableExists = true;
+                }
+            }
+
+            try (ResultSet rs = stmt.executeQuery(
+                    "SELECT COUNT(*) FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'LOAD_TEST_SEQ'")) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    seqExists = true;
+                }
+            }
+
+            if (tableExists && seqExists) {
+                logger.info("Oracle schema already exists - reusing existing schema");
+                logger.info("  (DROP objects manually to recreate, or use --truncate to clear data only)");
+                return;
+            }
+
+            // 기존 객체 삭제 (일부만 존재하는 경우)
+            if (seqExists) {
+                try {
+                    stmt.execute("DROP SEQUENCE LOAD_TEST_SEQ");
+                } catch (SQLException ignored) {}
+            }
+            if (tableExists) {
+                try {
+                    stmt.execute("DROP TABLE LOAD_TEST PURGE");
+                } catch (SQLException ignored) {}
+            }
 
             // 시퀀스 생성
             stmt.execute("CREATE SEQUENCE LOAD_TEST_SEQ START WITH 1 INCREMENT BY 1 CACHE 1000 NOCYCLE ORDER");
@@ -176,6 +204,21 @@ public class OracleAdapter extends AbstractDatabaseAdapter {
 
             conn.commit();
             logger.info("Oracle schema created successfully");
+        }
+    }
+
+    @Override
+    public void truncateTable(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            // 테이블 TRUNCATE
+            stmt.execute("TRUNCATE TABLE LOAD_TEST");
+
+            // 시퀀스 재생성 (1부터 다시 시작)
+            stmt.execute("DROP SEQUENCE LOAD_TEST_SEQ");
+            stmt.execute("CREATE SEQUENCE LOAD_TEST_SEQ START WITH 1 INCREMENT BY 1 CACHE 1000 NOCYCLE ORDER");
+
+            conn.commit();
+            logger.info("Table LOAD_TEST truncated and sequence LOAD_TEST_SEQ reset to 1");
         }
     }
 }

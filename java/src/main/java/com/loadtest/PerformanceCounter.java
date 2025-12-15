@@ -66,6 +66,13 @@ public class PerformanceCounter {
         return System.currentTimeMillis() < warmupEndTime;
     }
 
+    /**
+     * warmup 기간이 설정되어 있는지 확인 (warmup > 0)
+     */
+    public boolean hasWarmupConfig() {
+        return warmupEndTime != null;
+    }
+
     public void recordTransaction(double latencyMs) {
         long currentTime = System.currentTimeMillis();
 

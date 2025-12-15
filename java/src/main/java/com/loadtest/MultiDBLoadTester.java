@@ -53,7 +53,7 @@ public class MultiDBLoadTester {
     }
 
     public void runLoadTest(int threadCount, int durationSeconds, WorkMode mode,
-                            boolean skipSchemaSetup, double monitorInterval,
+                            boolean truncateTable, double monitorInterval,
                             int subSecondIntervalMs, int warmupSeconds, int rampUpSeconds,
                             int targetTps, int batchSize,
                             String outputFormat, String outputFile) {
@@ -75,13 +75,22 @@ public class MultiDBLoadTester {
         // 커넥션 풀 생성
         dbAdapter.createConnectionPool(config);
 
-        // 스키마 설정
-        if (!skipSchemaSetup) {
-            logger.info("Setting up database schema...");
+        // 스키마 설정 (기존 스키마가 있으면 재사용)
+        logger.info("Setting up database schema...");
+        try (Connection conn = dbAdapter.getConnection()) {
+            dbAdapter.setupSchema(conn);
+        } catch (SQLException e) {
+            logger.error("Schema setup failed: {}", e.getMessage());
+            System.exit(1);
+        }
+
+        // 테이블 TRUNCATE (--truncate 옵션)
+        if (truncateTable) {
+            logger.info("Truncating table...");
             try (Connection conn = dbAdapter.getConnection()) {
-                dbAdapter.setupSchema(conn);
+                dbAdapter.truncateTable(conn);
             } catch (SQLException e) {
-                logger.error("Schema setup failed: {}", e.getMessage());
+                logger.error("Table truncate failed: {}", e.getMessage());
                 System.exit(1);
             }
         }
@@ -100,13 +109,21 @@ public class MultiDBLoadTester {
 
         // 시간 설정
         Instant now = Instant.now();
-        Instant warmupEndTime = warmupSeconds > 0 ? now.plus(warmupSeconds, ChronoUnit.SECONDS) : now;
+        Instant warmupEndTime = warmupSeconds > 0 ? now.plus(warmupSeconds, ChronoUnit.SECONDS) : null;
         Instant endTime = now.plus(durationSeconds + warmupSeconds, ChronoUnit.SECONDS);
 
-        // 워밍업 설정 (항상 설정하여 postWarmupTps 계산 가능하도록)
-        perfCounter.setWarmupEndTime(warmupEndTime.toEpochMilli());
+        // 워밍업 설정 (warmup > 0일 때만 설정)
         if (warmupSeconds > 0) {
-            logger.info("Warmup period: {} seconds", warmupSeconds);
+            perfCounter.setWarmupEndTime(warmupEndTime.toEpochMilli());
+            logger.info("================================================================================");
+            logger.info("Warmup period: {} seconds (Avg TPS will be calculated after warmup)", warmupSeconds);
+            logger.info("Total test duration: {} seconds (warmup) + {} seconds (measurement) = {} seconds",
+                    warmupSeconds, durationSeconds, warmupSeconds + durationSeconds);
+            logger.info("================================================================================");
+        } else {
+            logger.info("================================================================================");
+            logger.info("No warmup period. Test duration: {} seconds", durationSeconds);
+            logger.info("================================================================================");
         }
 
         // Rate limiter
@@ -211,7 +228,9 @@ public class MultiDBLoadTester {
         System.out.printf("  - Total Errors: %,d%n", stats.get("totalErrors"));
         System.out.printf("  - Elapsed Time: %.2fs%n", stats.get("elapsedSeconds"));
         System.out.printf("  - Average TPS: %.2f%n", stats.get("avgTps"));
-        System.out.printf("  - Post-Warmup TPS: %.2f%n", stats.get("postWarmupTps"));
+        if (warmupSeconds > 0) {
+            System.out.printf("  - Post-Warmup TPS: %.2f%n", stats.get("postWarmupTps"));
+        }
         System.out.println("-".repeat(80));
         System.out.println("Latency:");
         System.out.printf("  - Average: %.2fms%n", latencyStats.get("avg"));
@@ -290,6 +309,8 @@ public class MultiDBLoadTester {
                     .maxLifetimeSeconds(Integer.parseInt(cmd.getOptionValue("max-lifetime", "1800")))
                     .leakDetectionThresholdSeconds(Integer.parseInt(cmd.getOptionValue("leak-detection-threshold", "60")))
                     .idleCheckIntervalSeconds(Integer.parseInt(cmd.getOptionValue("idle-check-interval", "30")))
+                    .idleTimeoutSeconds(Integer.parseInt(cmd.getOptionValue("idle-timeout", "30")))
+                    .keepaliveTimeSeconds(Integer.parseInt(cmd.getOptionValue("keepalive-time", "30")))
                     .build();
 
             MultiDBLoadTester tester = new MultiDBLoadTester(config);
@@ -305,10 +326,10 @@ public class MultiDBLoadTester {
                     Integer.parseInt(cmd.getOptionValue("thread-count", "100")),
                     Integer.parseInt(cmd.getOptionValue("test-duration", "300")),
                     WorkMode.fromString(cmd.getOptionValue("mode", "full")),
-                    cmd.hasOption("skip-schema-setup"),
+                    cmd.hasOption("truncate"),
                     Double.parseDouble(cmd.getOptionValue("monitor-interval", "1.0")),
                     Integer.parseInt(cmd.getOptionValue("sub-second-interval", "100")),
-                    Integer.parseInt(cmd.getOptionValue("warmup", "0")),
+                    Integer.parseInt(cmd.getOptionValue("warmup", "30")),
                     Integer.parseInt(cmd.getOptionValue("ramp-up", "0")),
                     Integer.parseInt(cmd.getOptionValue("target-tps", "0")),
                     Integer.parseInt(cmd.getOptionValue("batch-size", "1")),
@@ -351,12 +372,12 @@ public class MultiDBLoadTester {
                 .hasArg().desc("Test duration in seconds (default: 300)").build());
         options.addOption(Option.builder().longOpt("mode")
                 .hasArg().desc("Work mode: full, insert-only, select-only, update-only, delete-only, mixed (default: full)").build());
-        options.addOption(Option.builder().longOpt("skip-schema-setup")
-                .desc("Skip schema creation").build());
+        options.addOption(Option.builder().longOpt("truncate")
+                .desc("Truncate table before test (clears data, resets sequence)").build());
 
         // 워밍업 및 부하 제어
         options.addOption(Option.builder().longOpt("warmup")
-                .hasArg().desc("Warmup period in seconds (default: 0)").build());
+                .hasArg().desc("Warmup period in seconds (default: 30)").build());
         options.addOption(Option.builder().longOpt("ramp-up")
                 .hasArg().desc("Ramp-up period in seconds (default: 0)").build());
         options.addOption(Option.builder().longOpt("target-tps")
@@ -387,6 +408,10 @@ public class MultiDBLoadTester {
                 .hasArg().desc("Leak detection threshold in seconds (default: 60)").build());
         options.addOption(Option.builder().longOpt("idle-check-interval")
                 .hasArg().desc("Idle connection check interval in seconds (default: 30)").build());
+        options.addOption(Option.builder().longOpt("idle-timeout")
+                .hasArg().desc("Idle connection timeout in seconds (default: 30)").build());
+        options.addOption(Option.builder().longOpt("keepalive-time")
+                .hasArg().desc("Keepalive interval for idle connections in seconds (default: 30, min: 30)").build());
 
         // 기타
         options.addOption(Option.builder().longOpt("print-ddl")

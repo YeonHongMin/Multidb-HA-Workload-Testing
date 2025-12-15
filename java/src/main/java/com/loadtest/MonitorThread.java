@@ -19,6 +19,7 @@ public class MonitorThread extends Thread {
     private final PerformanceCounter perfCounter;
     private final AtomicBoolean shutdownRequested;
     private volatile boolean running = true;
+    private volatile boolean warmupEndLogged = false;
 
     public MonitorThread(double intervalSeconds, Instant endTime,
                          DatabaseAdapter dbAdapter, PerformanceCounter perfCounter,
@@ -56,16 +57,36 @@ public class MonitorThread extends Thread {
             double realtimeTps = perfCounter.getSubSecondTps();
 
             boolean isWarmup = perfCounter.isWarmupPeriod();
-            String warmupIndicator = isWarmup ? "[WARMUP] " : "";
+            boolean hasWarmupConfig = perfCounter.hasWarmupConfig();
 
-            // Avg TPS: warmup 중에는 "-", warmup 이후에는 postWarmupTps 표시
-            String avgTpsStr = isWarmup ? "-" :
-                String.format("%.2f", ((Number) stats.get("postWarmupTps")).doubleValue());
+            // Warmup 종료 시점 로깅 (한 번만, warmup이 설정된 경우에만)
+            if (hasWarmupConfig && !isWarmup && !warmupEndLogged) {
+                warmupEndLogged = true;
+                logger.info("================================================================================");
+                logger.info("[Monitor] *** WARMUP COMPLETED *** Starting measurement phase...");
+                logger.info("================================================================================");
+            }
+
+            // 상태 표시: WARMUP 또는 RUNNING
+            String statusIndicator = isWarmup ? "[WARMUP]  " : "[RUNNING] ";
+
+            // Avg TPS 계산:
+            // - warmup 중: "-"
+            // - warmup 없음 (warmup=0): avgTps 사용
+            // - warmup 후: postWarmupTps 사용
+            String avgTpsStr;
+            if (isWarmup) {
+                avgTpsStr = "-";
+            } else if (hasWarmupConfig) {
+                avgTpsStr = String.format("%.2f", ((Number) stats.get("postWarmupTps")).doubleValue());
+            } else {
+                avgTpsStr = String.format("%.2f", ((Number) stats.get("avgTps")).doubleValue());
+            }
 
             logger.info(
                 "[Monitor] {}TXN: {} | INS: {} | SEL: {} | UPD: {} | DEL: {} | ERR: {} | " +
                 "Avg TPS: {} | RT TPS: {} | Lat(p95/p99): {}/{}ms | Pool: {}/{}",
-                warmupIndicator,
+                statusIndicator,
                 String.format("%,d", ((Number) intervalStats.get("intervalTransactions")).longValue()),
                 String.format("%,d", ((Number) intervalStats.get("intervalInserts")).longValue()),
                 String.format("%,d", ((Number) intervalStats.get("intervalSelects")).longValue()),
