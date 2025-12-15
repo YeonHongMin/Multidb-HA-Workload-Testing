@@ -38,6 +38,11 @@ public class PerformanceCounter {
     // 구간별 통계
     private volatile long lastCheckTime;
     private volatile long lastTransactions;
+    private volatile long lastInserts;
+    private volatile long lastSelects;
+    private volatile long lastUpdates;
+    private volatile long lastDeletes;
+    private volatile long lastErrors;
 
     // 시계열 데이터
     private final List<Map<String, Object>> timeSeries = Collections.synchronizedList(new ArrayList<>());
@@ -200,18 +205,38 @@ public class PerformanceCounter {
     public Map<String, Object> getIntervalStats() {
         long currentTime = System.currentTimeMillis();
         long currentTransactions = totalTransactions.get();
+        long currentInserts = totalInserts.get();
+        long currentSelects = totalSelects.get();
+        long currentUpdates = totalUpdates.get();
+        long currentDeletes = totalDeletes.get();
+        long currentErrors = totalErrors.get();
 
         double intervalTime = (currentTime - lastCheckTime) / 1000.0;
         long intervalTransactions = currentTransactions - lastTransactions;
+        long intervalInserts = currentInserts - lastInserts;
+        long intervalSelects = currentSelects - lastSelects;
+        long intervalUpdates = currentUpdates - lastUpdates;
+        long intervalDeletes = currentDeletes - lastDeletes;
+        long intervalErrors = currentErrors - lastErrors;
 
         lastCheckTime = currentTime;
         lastTransactions = currentTransactions;
+        lastInserts = currentInserts;
+        lastSelects = currentSelects;
+        lastUpdates = currentUpdates;
+        lastDeletes = currentDeletes;
+        lastErrors = currentErrors;
 
         double intervalTps = intervalTime > 0 ? intervalTransactions / intervalTime : 0;
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("intervalSeconds", intervalTime);
         stats.put("intervalTransactions", intervalTransactions);
+        stats.put("intervalInserts", intervalInserts);
+        stats.put("intervalSelects", intervalSelects);
+        stats.put("intervalUpdates", intervalUpdates);
+        stats.put("intervalDeletes", intervalDeletes);
+        stats.put("intervalErrors", intervalErrors);
         stats.put("intervalTps", Math.round(intervalTps * 100.0) / 100.0);
         return stats;
     }

@@ -48,25 +48,31 @@ public class MonitorThread extends Thread {
                 break;
             }
 
+            Map<String, Object> intervalStats = perfCounter.getIntervalStats();
             Map<String, Object> stats = perfCounter.getStats();
             Map<String, Double> latencyStats = perfCounter.getLatencyStats();
             Map<String, Object> poolStats = dbAdapter.getPoolStats();
 
             double realtimeTps = perfCounter.getSubSecondTps();
 
-            String warmupIndicator = perfCounter.isWarmupPeriod() ? "[WARMUP] " : "";
+            boolean isWarmup = perfCounter.isWarmupPeriod();
+            String warmupIndicator = isWarmup ? "[WARMUP] " : "";
+
+            // Avg TPS: warmup 중에는 "-", warmup 이후에는 postWarmupTps 표시
+            String avgTpsStr = isWarmup ? "-" :
+                String.format("%.2f", ((Number) stats.get("postWarmupTps")).doubleValue());
 
             logger.info(
                 "[Monitor] {}TXN: {} | INS: {} | SEL: {} | UPD: {} | DEL: {} | ERR: {} | " +
                 "Avg TPS: {} | RT TPS: {} | Lat(p95/p99): {}/{}ms | Pool: {}/{}",
                 warmupIndicator,
-                String.format("%,d", ((Number) stats.get("totalTransactions")).longValue()),
-                String.format("%,d", ((Number) stats.get("totalInserts")).longValue()),
-                String.format("%,d", ((Number) stats.get("totalSelects")).longValue()),
-                String.format("%,d", ((Number) stats.get("totalUpdates")).longValue()),
-                String.format("%,d", ((Number) stats.get("totalDeletes")).longValue()),
-                String.format("%,d", ((Number) stats.get("totalErrors")).longValue()),
-                String.format("%.2f", ((Number) stats.get("avgTps")).doubleValue()),
+                String.format("%,d", ((Number) intervalStats.get("intervalTransactions")).longValue()),
+                String.format("%,d", ((Number) intervalStats.get("intervalInserts")).longValue()),
+                String.format("%,d", ((Number) intervalStats.get("intervalSelects")).longValue()),
+                String.format("%,d", ((Number) intervalStats.get("intervalUpdates")).longValue()),
+                String.format("%,d", ((Number) intervalStats.get("intervalDeletes")).longValue()),
+                String.format("%,d", ((Number) intervalStats.get("intervalErrors")).longValue()),
+                avgTpsStr,
                 String.format("%.2f", realtimeTps),
                 String.format("%.1f", latencyStats.get("p95")),
                 String.format("%.1f", latencyStats.get("p99")),

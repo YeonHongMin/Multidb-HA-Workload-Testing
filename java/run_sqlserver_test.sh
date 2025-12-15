@@ -2,7 +2,7 @@
 # SQL Server Load Test Script (HikariCP)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-JAR_FILE="$SCRIPT_DIR/target/multi-db-load-tester-0.1.jar"
+JAR_FILE="$SCRIPT_DIR/target/multi-db-load-tester-0.2.jar"
 
 # Default values - modify as needed
 SQLSERVER_HOST="${SQLSERVER_HOST:-localhost}"

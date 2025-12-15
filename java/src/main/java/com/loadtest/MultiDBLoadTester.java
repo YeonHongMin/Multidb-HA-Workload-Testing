@@ -103,9 +103,9 @@ public class MultiDBLoadTester {
         Instant warmupEndTime = warmupSeconds > 0 ? now.plus(warmupSeconds, ChronoUnit.SECONDS) : now;
         Instant endTime = now.plus(durationSeconds + warmupSeconds, ChronoUnit.SECONDS);
 
-        // 워밍업 설정
+        // 워밍업 설정 (항상 설정하여 postWarmupTps 계산 가능하도록)
+        perfCounter.setWarmupEndTime(warmupEndTime.toEpochMilli());
         if (warmupSeconds > 0) {
-            perfCounter.setWarmupEndTime(warmupEndTime.toEpochMilli());
             logger.info("Warmup period: {} seconds", warmupSeconds);
         }
 

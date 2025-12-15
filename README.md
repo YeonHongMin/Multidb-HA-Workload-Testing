@@ -1,4 +1,4 @@
-# Multi-Database Load Tester v0.1
+# Multi-Database Load Tester v0.2
 
 Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2를 지원하는 고성능 멀티스레드 데이터베이스 부하 테스트 도구 (HikariCP 기반)
 
@@ -271,13 +271,13 @@ nc -zv 192.168.0.100 1521
 
 ```bash
 # 기본 실행 (2GB 힙)
-java -Xms1g -Xmx2g -jar multi-db-load-tester-0.1.jar ...
+java -Xms1g -Xmx2g -jar multi-db-load-tester-0.2.jar ...
 
 # 고부하 테스트 (4GB 힙, 500+ 스레드)
-java -Xms2g -Xmx4g -jar multi-db-load-tester-0.1.jar ...
+java -Xms2g -Xmx4g -jar multi-db-load-tester-0.2.jar ...
 
 # 초고부하 테스트 (8GB 힙, 1000+ 스레드)
-java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-0.1.jar ...
+java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-0.2.jar ...
 ```
 
 #### 스레드 수에 따른 권장 리소스
@@ -356,17 +356,20 @@ mvn clean package -DskipTests
 ### 2. 실행
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test_user --password test_pass \
-    --thread-count 100 --test-duration 60
+    --thread-count 100 --test-duration 60 \
+    --warmup 30
 ```
+
+> **Note**: `--warmup 30` 옵션은 처음 30초 동안을 워밍업 기간으로 설정하여 Avg TPS 계산에서 제외합니다.
 
 ### 3. 도움말
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar --help
+java -jar java/target/multi-db-load-tester-0.2.jar --help
 ```
 
 ---
@@ -393,30 +396,30 @@ java -jar java/target/multi-db-load-tester-0.1.jar --help
 
 ```bash
 # 1단계: insert-only로 데이터 삽입 (테이블 생성됨)
-java -jar target/multi-db-load-tester-0.1.jar \
+java -jar target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
     --mode insert-only \
-    --test-duration 60
+    --test-duration 60 --warmup 10
 
 # 2단계: update-only 실행 (--skip-schema-setup 필수!)
-java -jar target/multi-db-load-tester-0.1.jar \
+java -jar target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
     --mode update-only \
     --skip-schema-setup \
-    --test-duration 60
+    --test-duration 60 --warmup 10
 
 # 3단계: delete-only 실행 (--skip-schema-setup 필수!)
-java -jar target/multi-db-load-tester-0.1.jar \
+java -jar target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
     --mode delete-only \
     --skip-schema-setup \
-    --test-duration 60
+    --test-duration 60 --warmup 10
 ```
 
 > **Note**: `--skip-schema-setup` 옵션 없이 `update-only` 또는 `delete-only`를 실행하면 테이블이 비어있어 작업이 수행되지 않습니다.
@@ -428,31 +431,34 @@ java -jar target/multi-db-load-tester-0.1.jar \
 ### Oracle
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test_user --password pass \
-    --thread-count 200 --test-duration 300
+    --thread-count 200 --test-duration 300 \
+    --warmup 30
 ```
 
 ### PostgreSQL
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type postgresql \
     --host localhost --port 5432 --database testdb \
     --user test_user --password pass \
-    --thread-count 200
+    --thread-count 200 --test-duration 300 \
+    --warmup 30
 ```
 
 ### MySQL
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type mysql \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
-    --thread-count 50
+    --thread-count 50 --test-duration 300 \
+    --warmup 30
 ```
 
 > **Note**: MySQL의 커넥션 풀 크기는 기본적으로 32개로 제한됩니다.
@@ -460,31 +466,34 @@ java -jar java/target/multi-db-load-tester-0.1.jar \
 ### SQL Server
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type sqlserver \
     --host localhost --port 1433 --database testdb \
     --user sa --password pass \
-    --thread-count 200
+    --thread-count 200 --test-duration 300 \
+    --warmup 30
 ```
 
 ### Tibero
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type tibero \
     --host 192.168.0.140 --port 8629 --sid tibero \
     --user test_user --password pass \
-    --thread-count 200
+    --thread-count 200 --test-duration 300 \
+    --warmup 30
 ```
 
 ### IBM DB2
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type db2 \
     --host localhost --port 50000 --database testdb \
     --user db2inst1 --password pass \
-    --thread-count 200
+    --thread-count 200 --test-duration 300 \
+    --warmup 30
 ```
 
 ---
@@ -494,7 +503,7 @@ java -jar java/target/multi-db-load-tester-0.1.jar \
 ### 워밍업 + Ramp-up + Rate Limiting
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type postgresql \
     --host localhost --port 5432 --database testdb \
     --user test --password pass \
@@ -507,7 +516,7 @@ java -jar java/target/multi-db-load-tester-0.1.jar \
 ### 배치 INSERT
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type mysql \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
@@ -520,7 +529,7 @@ java -jar java/target/multi-db-load-tester-0.1.jar \
 
 ```bash
 # JSON 형식
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -528,7 +537,7 @@ java -jar java/target/multi-db-load-tester-0.1.jar \
     --output-file results/test_result.json
 
 # CSV 형식
-java -jar java/target/multi-db-load-tester-0.1.jar \
+java -jar java/target/multi-db-load-tester-0.2.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -641,10 +650,27 @@ export TEST_DURATION=300
 
 ## 모니터링 출력 예시
 
+### Warmup 기간 중
 ```
-[Monitor] TXN: 45,230 | INS: 45,230 | SEL: 45,230 | UPD: 45,230 | DEL: 45,230 | ERR: 0 |
-Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
+[Monitor] [WARMUP] TXN: 1,234 | INS: 1,234 | SEL: 1,234 | UPD: 1,234 | DEL: 1,234 | ERR: 0 | Avg TPS: - | RT TPS: 1234.00 | Lat(p95/p99): 2.1/3.5ms | Pool: 95/100
 ```
+
+### Warmup 종료 후
+```
+[Monitor] TXN: 1,523 | INS: 1,523 | SEL: 1,523 | UPD: 1,523 | DEL: 1,523 | ERR: 0 | Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
+```
+
+### 출력 항목 설명
+
+| 항목 | 설명 |
+|------|------|
+| `[WARMUP]` | 워밍업 기간 중 표시 |
+| `TXN/INS/SEL/UPD/DEL` | 해당 구간(interval) 동안의 변화량 (delta) |
+| `ERR` | 해당 구간 동안의 에러 수 |
+| `Avg TPS` | Warmup 이후의 평균 TPS (Warmup 중에는 `-` 표시) |
+| `RT TPS` | 실시간 TPS (최근 1초간 트랜잭션 수) |
+| `Lat(p95/p99)` | 응답시간 백분위수 (밀리초) |
+| `Pool` | 커넥션 풀 상태 (활성/전체) |
 
 > **Note**: `--mode full` 사용 시 INSERT, SELECT, UPDATE, DELETE가 모두 수행됩니다.
 
@@ -697,6 +723,33 @@ Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
         ├── DatabaseConfig.java        # DB 설정
         └── WorkMode.java              # 작업 모드
 ```
+
+---
+
+## 버전 히스토리
+
+### v0.2 (2025-12-15)
+
+**모니터링 출력 개선**
+- 모니터링 출력이 누적 값에서 **구간별 변화량(delta)**으로 변경
+  - TXN, INS, SEL, UPD, DEL, ERR: 이전 interval 대비 변화량 표시
+- Avg TPS가 **Warmup 기간을 제외**하고 계산
+  - Warmup 중: `Avg TPS: -` 표시
+  - Warmup 후: Warmup 제외 평균 TPS 표시
+
+**버그 수정**
+- `--warmup 0` (기본값) 사용 시에도 Avg TPS가 정상 계산되도록 수정
+
+### v0.1 (2025-12-14)
+
+**초기 릴리스**
+- 6개 데이터베이스 지원: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2
+- HikariCP 기반 고성능 커넥션 풀링
+- 6가지 작업 모드: full, insert-only, select-only, update-only, delete-only, mixed
+- 워밍업, Ramp-up, Rate Limiting 기능
+- 배치 INSERT 지원
+- CSV/JSON 결과 내보내기
+- 실시간 모니터링 (TPS, 레이턴시 P95/P99)
 
 ---
 
