@@ -98,8 +98,8 @@ public class PerformanceCounter {
             }
         }
 
-        // 레이턴시 기록
-        if (latencyMs > 0) {
+        // 레이턴시 기록 (warmup 중이면 제외)
+        if (latencyMs > 0 && (warmupEndTime == null || currentTime >= warmupEndTime)) {
             latencyLock.lock();
             try {
                 latencies.addLast(latencyMs);

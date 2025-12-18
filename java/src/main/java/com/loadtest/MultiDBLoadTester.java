@@ -14,13 +14,13 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Multi-Database Load Tester v2.1 (HikariCP Version)
+ * Multi-Database Load Tester v0.2.2 (HikariCP Version)
  *
  * 지원 데이터베이스: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2
  */
 public class MultiDBLoadTester {
     private static final Logger logger = LoggerFactory.getLogger(MultiDBLoadTester.class);
-    private static final String VERSION = "2.1.0";
+    private static final String VERSION = "0.2.2";
 
     private final DatabaseConfig config;
     private DatabaseAdapter dbAdapter;
@@ -227,9 +227,10 @@ public class MultiDBLoadTester {
         System.out.printf("  - Total Deletes: %,d%n", stats.get("totalDeletes"));
         System.out.printf("  - Total Errors: %,d%n", stats.get("totalErrors"));
         System.out.printf("  - Elapsed Time: %.2fs%n", stats.get("elapsedSeconds"));
-        System.out.printf("  - Average TPS: %.2f%n", stats.get("avgTps"));
         if (warmupSeconds > 0) {
-            System.out.printf("  - Post-Warmup TPS: %.2f%n", stats.get("postWarmupTps"));
+            System.out.printf("  - Average TPS: %.2f%n", stats.get("postWarmupTps"));
+        } else {
+            System.out.printf("  - Average TPS: %.2f%n", stats.get("avgTps"));
         }
         System.out.println("-".repeat(80));
         System.out.println("Latency:");

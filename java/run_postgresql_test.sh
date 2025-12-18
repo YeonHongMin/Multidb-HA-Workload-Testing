@@ -2,7 +2,7 @@
 # PostgreSQL Load Test Script (HikariCP)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-JAR_FILE="$SCRIPT_DIR/target/multi-db-load-tester-0.2.jar"
+JAR_FILE="$SCRIPT_DIR/target/multi-db-load-tester-0.2.2.jar"
 
 # Default values - modify as needed
 POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
