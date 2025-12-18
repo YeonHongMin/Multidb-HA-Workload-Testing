@@ -2,7 +2,7 @@
 
 ## 개요
 
-**버전**: 0.2
+**버전**: 0.2.1
 **언어**: Java 17
 **빌드 도구**: Maven
 **목적**: HikariCP 커넥션 풀링을 활용한 엔터프라이즈급 다중 데이터베이스 부하 테스트 도구
@@ -49,7 +49,7 @@ Multidb-HA-Workload-Testing/
     │
     └── target/                         # 빌드 출력
         ├── classes/                    # 컴파일된 .class 파일
-        └── multi-db-load-tester-0.2.jar  # 실행 가능한 JAR (~19MB)
+        └── multi-db-load-tester-0.2.1.jar  # 실행 가능한 JAR (~19MB)
 ```
 
 ## 핵심 컴포넌트
@@ -206,7 +206,7 @@ Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p95/p99): 4.5/8.2ms | Pool: 95/100
 cd java && mvn clean package
 
 # Oracle 부하 테스트 실행
-java -jar target/multi-db-load-tester-0.2.jar \
+java -jar target/multi-db-load-tester-0.2.1.jar \
     --db-type oracle \
     --host 192.168.0.100 \
     --port 1521 \

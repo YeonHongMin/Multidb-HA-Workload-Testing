@@ -85,7 +85,7 @@ public class MonitorThread extends Thread {
 
             logger.info(
                 "[Monitor] {}TXN: {} | INS: {} | SEL: {} | UPD: {} | DEL: {} | ERR: {} | " +
-                "Avg TPS: {} | RT TPS: {} | Lat(p95/p99): {}/{}ms | Pool: {}/{}",
+                "Avg TPS: {} | RT TPS: {} | Lat(p50/p95/p99): {}/{}/{}ms | Pool: {}/{}",
                 statusIndicator,
                 String.format("%,d", ((Number) intervalStats.get("intervalTransactions")).longValue()),
                 String.format("%,d", ((Number) intervalStats.get("intervalInserts")).longValue()),
@@ -95,6 +95,7 @@ public class MonitorThread extends Thread {
                 String.format("%,d", ((Number) intervalStats.get("intervalErrors")).longValue()),
                 avgTpsStr,
                 String.format("%.2f", realtimeTps),
+                String.format("%.1f", latencyStats.get("p50")),
                 String.format("%.1f", latencyStats.get("p95")),
                 String.format("%.1f", latencyStats.get("p99")),
                 poolStats.getOrDefault("poolActive", 0),
