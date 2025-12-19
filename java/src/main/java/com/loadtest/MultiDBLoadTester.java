@@ -188,6 +188,7 @@ public class MultiDBLoadTester {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        monitor.logFinalSnapshot();
 
         // 최종 통계 출력
         printFinalStats(threadCount, durationSeconds, totalTransactions, mode,

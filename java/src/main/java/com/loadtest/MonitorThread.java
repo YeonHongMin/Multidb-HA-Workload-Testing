@@ -69,44 +69,62 @@ public class MonitorThread extends Thread {
 
             // 상태 표시: WARMUP 또는 RUNNING
             String statusIndicator = isWarmup ? "[WARMUP]  " : "[RUNNING] ";
-
-            // Avg TPS 계산:
-            // - warmup 중: "-"
-            // - warmup 없음 (warmup=0): avgTps 사용
-            // - warmup 후: postWarmupTps 사용
-            String avgTpsStr;
-            if (isWarmup) {
-                avgTpsStr = "-";
-            } else if (hasWarmupConfig) {
-                avgTpsStr = String.format("%.2f", ((Number) stats.get("postWarmupTps")).doubleValue());
-            } else {
-                avgTpsStr = String.format("%.2f", ((Number) stats.get("avgTps")).doubleValue());
-            }
-
-            logger.info(
-                "[Monitor] {}TXN: {} | INS: {} | SEL: {} | UPD: {} | DEL: {} | ERR: {} | " +
-                "Avg TPS: {} | RT TPS: {} | Lat(p50/p95/p99): {}/{}/{}ms | Pool: {}/{}",
-                statusIndicator,
-                String.format("%,d", ((Number) intervalStats.get("intervalTransactions")).longValue()),
-                String.format("%,d", ((Number) intervalStats.get("intervalInserts")).longValue()),
-                String.format("%,d", ((Number) intervalStats.get("intervalSelects")).longValue()),
-                String.format("%,d", ((Number) intervalStats.get("intervalUpdates")).longValue()),
-                String.format("%,d", ((Number) intervalStats.get("intervalDeletes")).longValue()),
-                String.format("%,d", ((Number) intervalStats.get("intervalErrors")).longValue()),
-                avgTpsStr,
-                String.format("%.2f", realtimeTps),
-                String.format("%.1f", latencyStats.get("p50")),
-                String.format("%.1f", latencyStats.get("p95")),
-                String.format("%.1f", latencyStats.get("p99")),
-                poolStats.getOrDefault("poolActive", 0),
-                poolStats.getOrDefault("poolTotal", 0)
-            );
-
-            // 시계열 데이터 기록
-            perfCounter.recordTimeSeries(poolStats);
+            logSnapshot(statusIndicator, intervalStats, stats, latencyStats, poolStats, realtimeTps);
         }
 
         logger.info("[Monitor] Stopped");
+    }
+
+    public void logFinalSnapshot() {
+        String statusIndicator = "[FINAL]   ";
+        Map<String, Object> intervalStats = perfCounter.getIntervalStats();
+        Map<String, Object> stats = perfCounter.getStats();
+        Map<String, Double> latencyStats = perfCounter.getLatencyStats();
+        Map<String, Object> poolStats = dbAdapter.getPoolStats();
+        double realtimeTps = perfCounter.getSubSecondTps();
+        logSnapshot(statusIndicator, intervalStats, stats, latencyStats, poolStats, realtimeTps);
+    }
+
+    private void logSnapshot(String statusIndicator, Map<String, Object> intervalStats,
+                             Map<String, Object> stats, Map<String, Double> latencyStats,
+                             Map<String, Object> poolStats, double realtimeTps) {
+        boolean isWarmup = perfCounter.isWarmupPeriod();
+        boolean hasWarmupConfig = perfCounter.hasWarmupConfig();
+
+        // Avg TPS 계산:
+        // - warmup 중: "-"
+        // - warmup 없음 (warmup=0): avgTps 사용
+        // - warmup 후: postWarmupTps 사용
+        String avgTpsStr;
+        if (isWarmup) {
+            avgTpsStr = "-";
+        } else if (hasWarmupConfig) {
+            avgTpsStr = String.format("%.2f", ((Number) stats.get("postWarmupTps")).doubleValue());
+        } else {
+            avgTpsStr = String.format("%.2f", ((Number) stats.get("avgTps")).doubleValue());
+        }
+
+        logger.info(
+            "[Monitor] {}TXN: {} | INS: {} | SEL: {} | UPD: {} | DEL: {} | ERR: {} | " +
+            "Avg TPS: {} | RT TPS: {} | Lat(p50/p95/p99): {}/{}/{}ms | Pool: {}/{}",
+            statusIndicator,
+            String.format("%,d", ((Number) intervalStats.get("intervalTransactions")).longValue()),
+            String.format("%,d", ((Number) intervalStats.get("intervalInserts")).longValue()),
+            String.format("%,d", ((Number) intervalStats.get("intervalSelects")).longValue()),
+            String.format("%,d", ((Number) intervalStats.get("intervalUpdates")).longValue()),
+            String.format("%,d", ((Number) intervalStats.get("intervalDeletes")).longValue()),
+            String.format("%,d", ((Number) intervalStats.get("intervalErrors")).longValue()),
+            avgTpsStr,
+            String.format("%.2f", realtimeTps),
+            String.format("%.1f", latencyStats.get("p50")),
+            String.format("%.1f", latencyStats.get("p95")),
+            String.format("%.1f", latencyStats.get("p99")),
+            poolStats.getOrDefault("poolActive", 0),
+            poolStats.getOrDefault("poolTotal", 0)
+        );
+
+        // 시계열 데이터 기록
+        perfCounter.recordTimeSeries(poolStats);
     }
 
     public void stopMonitor() {
