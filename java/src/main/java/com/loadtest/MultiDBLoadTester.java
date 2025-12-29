@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Multi-Database Load Tester v0.2.2 (HikariCP Version)
  *
- * 지원 데이터베이스: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2
+ * 지원 데이터베이스: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore
  */
 public class MultiDBLoadTester {
     private static final Logger logger = LoggerFactory.getLogger(MultiDBLoadTester.class);
@@ -40,6 +40,7 @@ public class MultiDBLoadTester {
             case "sqlserver", "mssql" -> new SQLServerAdapter();
             case "tibero" -> new TiberoAdapter();
             case "db2" -> new DB2Adapter();
+            case "singlestore" -> new SingleStoreAdapter();
             default -> throw new IllegalArgumentException("Unsupported database type: " + dbType);
         };
     }
@@ -351,7 +352,7 @@ public class MultiDBLoadTester {
 
         // 필수 옵션
         options.addOption(Option.builder().longOpt("db-type")
-                .hasArg().desc("Database type: oracle, postgresql, mysql, sqlserver, tibero, db2").build());
+                .hasArg().desc("Database type: oracle, postgresql, mysql, sqlserver, tibero, db2, singlestore").build());
         options.addOption(Option.builder().longOpt("host")
                 .hasArg().desc("Database host").build());
         options.addOption(Option.builder().longOpt("user")

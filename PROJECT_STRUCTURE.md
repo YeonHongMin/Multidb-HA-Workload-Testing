@@ -2,7 +2,7 @@
 
 ## 개요
 
-**버전**: 0.2.2
+**버전**: 0.2.3
 **언어**: Java 17
 **빌드 도구**: Maven
 **목적**: HikariCP 커넥션 풀링을 활용한 엔터프라이즈급 다중 데이터베이스 부하 테스트 도구
@@ -23,6 +23,7 @@ Multidb-HA-Workload-Testing/
     ├── run_sqlserver_test.sh           # SQL Server 테스트 실행기
     ├── run_tibero_test.sh              # Tibero 테스트 실행기
     ├── run_db2_test.sh                 # IBM DB2 테스트 실행기
+    ├── run_singlestore_test.sh         # SingleStore 테스트 실행기
     │
     ├── src/
     │   └── main/
@@ -42,14 +43,15 @@ Multidb-HA-Workload-Testing/
     │       │   ├── MySQLAdapter.java
     │       │   ├── SQLServerAdapter.java
     │       │   ├── TiberoAdapter.java
-    │       │   └── DB2Adapter.java
+    │       │   ├── DB2Adapter.java
+    │       │   └── SingleStoreAdapter.java
     │       │
     │       └── resources/              # 설정 리소스
     │           └── logback.xml         # 로깅 설정
     │
     └── target/                         # 빌드 출력
         ├── classes/                    # 컴파일된 .class 파일
-        └── multi-db-load-tester-0.2.2.jar  # 실행 가능한 JAR (~19MB)
+        └── multi-db-load-tester-0.2.3.jar  # 실행 가능한 JAR (~19MB)
 ```
 
 ## 핵심 컴포넌트
@@ -79,6 +81,7 @@ Multidb-HA-Workload-Testing/
 | `SQLServerAdapter.java` | SQL Server 2016+ | IDENTITY 컬럼 |
 | `TiberoAdapter.java` | Tibero 6+ | Oracle 호환 시퀀스 |
 | `DB2Adapter.java` | IBM DB2 11.1+ | 시퀀스 기반 ID |
+| `SingleStoreAdapter.java` | SingleStore 7.5+ | MySQL 호환 프로토콜 |
 
 ## 작업 모드
 
@@ -113,6 +116,7 @@ Multidb-HA-Workload-Testing/
 | SQL Server | mssql-jdbc | 13.2.1.jre11 |
 | Tibero | tibero-jdbc | 7.0 |
 | IBM DB2 | jcc | 12.1.3.0 |
+| SingleStore | singlestore-jdbc | 1.2.1 |
 
 ## 실행 흐름
 
@@ -227,7 +231,7 @@ java -jar target/multi-db-load-tester-0.2.2.jar \
 
 ## 주요 기능
 
-- **다중 데이터베이스 지원**: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2
+- **다중 데이터베이스 지원**: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore
 - **HikariCP 커넥션 풀링**: 누수 감지 기능이 있는 고성능 풀
 - **동시 실행**: 1000개 이상 스레드 지원
 - **6가지 작업 모드**: Full ACID, 단일 작업, 혼합 워크로드

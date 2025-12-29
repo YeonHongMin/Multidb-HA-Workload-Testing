@@ -86,6 +86,13 @@
             <version>local</version>
         </dependency>
 
+        <!-- SingleStore -->
+        <dependency>
+            <groupId>com.singlestore</groupId>
+            <artifactId>singlestore-jdbc</artifactId>
+            <version>local</version>
+        </dependency>
+
         <!-- JSON Processing -->
         <dependency>
             <groupId>com.google.code.gson</groupId>

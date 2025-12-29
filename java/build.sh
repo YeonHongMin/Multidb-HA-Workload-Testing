@@ -69,6 +69,14 @@ if [ -f "jre/db2/jcc-12.1.3.0.jar" ]; then
         -Dversion=local -Dpackaging=jar -q
 fi
 
+# SingleStore JDBC
+if [ -f "jre/singlestore/singlestore-jdbc-1.2.1.jar" ]; then
+    echo "Installing SingleStore JDBC driver..."
+    mvn install:install-file -Dfile=jre/singlestore/singlestore-jdbc-1.2.1.jar \
+        -DgroupId=com.singlestore -DartifactId=singlestore-jdbc \
+        -Dversion=local -Dpackaging=jar -q
+fi
+
 echo ""
 echo "Local JDBC drivers installed successfully!"
 echo ""
@@ -92,6 +100,7 @@ if [ -f "target/multi-db-load-tester-0.2.2.jar" ]; then
     echo "  - SQL Server (mssql-jdbc-13.2.1)"
     echo "  - Tibero (tibero7-jdbc)"
     echo "  - IBM DB2 (jcc-12.1.3.0)"
+    echo "  - SingleStore (singlestore-jdbc-1.2.1)"
     echo ""
     echo "Usage example:"
     echo "  java -jar target/multi-db-load-tester-0.2.2.jar --help"
