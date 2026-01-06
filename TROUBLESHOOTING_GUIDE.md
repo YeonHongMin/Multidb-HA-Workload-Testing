@@ -5,7 +5,7 @@
 | 항목 | 설명 |
 |------|-------------|
 | 문서 버전 | 1.0 |
-| 프로젝트 버전 | v0.2.3 |
+| 프로젝트 버전 | v0.2.4 |
 | 최종 업데이트 | 2025-12-29 |
 | 문서 관리자 | 개발팀 |
 
@@ -499,13 +499,31 @@ Error: ORA-12154: TNS:could not resolve the connect identifier
 ```
 
 **해결 방법**
-- `--sid` 옵션 사용
+- `--sid` 옵션 사용 (SID 형식)
 ```bash
 java -jar multi-db-load-tester.jar \
     --db-type tibero \
     --host localhost \
     --port 8629 \
     --sid tibero \
+    ...
+```
+
+- `--service-name` 옵션 사용 (Service Name 형식)
+```bash
+java -jar multi-db-load-tester.jar \
+    --db-type tibero \
+    --host localhost \
+    --port 8629 \
+    --service-name tibero_svc \
+    ...
+```
+
+- `--jdbc-url` 옵션 사용 (직접 URL 지정)
+```bash
+java -jar multi-db-load-tester.jar \
+    --db-type tibero \
+    --jdbc-url "jdbc:tibero:thin:@//localhost:8629/tibero" \
     ...
 ```
 

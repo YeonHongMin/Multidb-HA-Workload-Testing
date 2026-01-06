@@ -12,6 +12,14 @@ public class TiberoAdapter extends AbstractDatabaseAdapter {
 
     @Override
     public String buildJdbcUrl(DatabaseConfig config) {
+        // service_name이 설정된 경우 service_name 형식 사용
+        if (config.getServiceName() != null && !config.getServiceName().isEmpty()) {
+            return String.format("jdbc:tibero:thin:@//%s:%d/%s",
+                    config.getHost(),
+                    config.getDefaultPort(),
+                    config.getServiceName());
+        }
+        // SID 형식 사용 (기존 방식)
         String sid = config.getSid() != null ? config.getSid() : config.getDatabase();
         return String.format("jdbc:tibero:thin:@%s:%d:%s",
                 config.getHost(),

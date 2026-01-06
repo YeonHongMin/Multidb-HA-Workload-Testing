@@ -22,7 +22,10 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 
     @Override
     public void createConnectionPool(DatabaseConfig config) {
-        String jdbcUrl = buildJdbcUrl(config);
+        // jdbcUrl이 직접 지정된 경우 우선 사용, 그렇지 않으면 빌드
+        String jdbcUrl = (config.getJdbcUrl() != null && !config.getJdbcUrl().isEmpty())
+                ? config.getJdbcUrl()
+                : buildJdbcUrl(config);
 
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(jdbcUrl);

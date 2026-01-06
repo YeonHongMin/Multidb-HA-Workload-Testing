@@ -10,6 +10,8 @@ public class DatabaseConfig {
     private String password;
     private String database;
     private String sid;
+    private String serviceName;
+    private String jdbcUrl;
     private int port;
     private int minPoolSize = 100;
     private int maxPoolSize = 200;
@@ -65,6 +67,16 @@ public class DatabaseConfig {
 
         public Builder sid(String sid) {
             config.sid = sid;
+            return this;
+        }
+
+        public Builder serviceName(String serviceName) {
+            config.serviceName = serviceName;
+            return this;
+        }
+
+        public Builder jdbcUrl(String jdbcUrl) {
+            config.jdbcUrl = jdbcUrl;
             return this;
         }
 
@@ -170,6 +182,22 @@ public class DatabaseConfig {
 
     public void setSid(String sid) {
         this.sid = sid;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
+
+    public void setJdbcUrl(String jdbcUrl) {
+        this.jdbcUrl = jdbcUrl;
     }
 
     public int getPort() {

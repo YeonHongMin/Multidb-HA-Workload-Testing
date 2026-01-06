@@ -14,13 +14,13 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Multi-Database Load Tester v0.2.2 (HikariCP Version)
+ * Multi-Database Load Tester v0.2.4 (HikariCP Version)
  *
  * 지원 데이터베이스: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore
  */
 public class MultiDBLoadTester {
     private static final Logger logger = LoggerFactory.getLogger(MultiDBLoadTester.class);
-    private static final String VERSION = "0.2.2";
+    private static final String VERSION = "0.2.4";
 
     private final DatabaseConfig config;
     private DatabaseAdapter dbAdapter;
@@ -291,9 +291,15 @@ public class MultiDBLoadTester {
             }
 
             // 필수 옵션 확인
-            if (!cmd.hasOption("db-type") || !cmd.hasOption("host") ||
-                !cmd.hasOption("user") || !cmd.hasOption("password")) {
-                System.err.println("Error: Required options missing: --db-type, --host, --user, --password");
+            // --jdbc-url이 있으면 --host는 필수가 아님
+            boolean hasJdbcUrl = cmd.hasOption("jdbc-url");
+            if (!cmd.hasOption("db-type") || !cmd.hasOption("user") || !cmd.hasOption("password")) {
+                System.err.println("Error: Required options missing: --db-type, --user, --password");
+                printHelp(options);
+                System.exit(1);
+            }
+            if (!hasJdbcUrl && !cmd.hasOption("host")) {
+                System.err.println("Error: --host is required when --jdbc-url is not specified");
                 printHelp(options);
                 System.exit(1);
             }
@@ -305,6 +311,8 @@ public class MultiDBLoadTester {
                     .port(cmd.hasOption("port") ? Integer.parseInt(cmd.getOptionValue("port")) : 0)
                     .database(cmd.getOptionValue("database"))
                     .sid(cmd.getOptionValue("sid"))
+                    .serviceName(cmd.getOptionValue("service-name"))
+                    .jdbcUrl(cmd.getOptionValue("jdbc-url"))
                     .user(cmd.getOptionValue("user"))
                     .password(cmd.getOptionValue("password"))
                     .minPoolSize(Integer.parseInt(cmd.getOptionValue("min-pool-size", "100")))
@@ -366,7 +374,11 @@ public class MultiDBLoadTester {
         options.addOption(Option.builder().longOpt("database")
                 .hasArg().desc("Database name (PostgreSQL, MySQL, SQL Server)").build());
         options.addOption(Option.builder().longOpt("sid")
-                .hasArg().desc("SID/Service name (Oracle, Tibero)").build());
+                .hasArg().desc("SID (Oracle, Tibero) - legacy SID format").build());
+        options.addOption(Option.builder().longOpt("service-name")
+                .hasArg().desc("Service name (Oracle, Tibero) - service name format").build());
+        options.addOption(Option.builder().longOpt("jdbc-url")
+                .hasArg().desc("Direct JDBC URL (overrides host/port/database/sid/service-name)").build());
 
         // 테스트 옵션
         options.addOption(Option.builder().longOpt("thread-count")
@@ -437,15 +449,25 @@ public class MultiDBLoadTester {
         formatter.printHelp("java -jar multi-db-load-tester.jar", options, true);
         System.out.println();
         System.out.println("Examples:");
-        System.out.println("  # Oracle test");
+        System.out.println("  # Oracle test (SID format)");
         System.out.println("  java -jar multi-db-load-tester.jar --db-type oracle --host localhost \\");
-        System.out.println("      --port 1521 --sid XEPDB1 --user test --password pass \\");
+        System.out.println("      --port 1521 --sid ORCL --user test --password pass \\");
+        System.out.println("      --thread-count 100 --test-duration 60");
+        System.out.println();
+        System.out.println("  # Oracle test (Service Name format)");
+        System.out.println("  java -jar multi-db-load-tester.jar --db-type oracle --host localhost \\");
+        System.out.println("      --port 1521 --service-name XEPDB1 --user test --password pass \\");
         System.out.println("      --thread-count 100 --test-duration 60");
         System.out.println();
         System.out.println("  # PostgreSQL with warmup and rate limiting");
         System.out.println("  java -jar multi-db-load-tester.jar --db-type postgresql --host localhost \\");
         System.out.println("      --port 5432 --database testdb --user test --password pass \\");
         System.out.println("      --warmup 30 --target-tps 5000 --thread-count 200");
+        System.out.println();
+        System.out.println("  # Direct JDBC URL");
+        System.out.println("  java -jar multi-db-load-tester.jar --db-type oracle \\");
+        System.out.println("      --jdbc-url \"jdbc:oracle:thin:@//scan-ip:1521/SERVICE\" \\");
+        System.out.println("      --user test --password pass --thread-count 100");
         System.out.println();
     }
 }

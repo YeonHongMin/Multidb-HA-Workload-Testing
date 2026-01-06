@@ -5,7 +5,7 @@
 | 항목 | 설명 |
 |------|-------------|
 | 문서 버전 | 1.0 |
-| 프로젝트 버전 | v0.2.3 |
+| 프로젝트 버전 | v0.2.4 |
 | 최종 업데이트 | 2025-12-29 |
 | 문서 관리자 | 개발팀 |
 
@@ -96,7 +96,9 @@ DatabaseConfig config = DatabaseConfig.builder()
 | `host(String host)` | String | 필수 | 데이터베이스 호스트 주소 |
 | `port(int port)` | int | 0 | 데이터베이스 포트 (0일 경우 기본 포트 사용) |
 | `database(String database)` | String | null | 데이터베이스 이름 (PostgreSQL, MySQL, SQL Server, SingleStore) |
-| `sid(String sid)` | String | null | SID/Service 이름 (Oracle, Tibero) |
+| `sid(String sid)` | String | null | SID (Oracle, Tibero) - SID 형식 접속 |
+| `serviceName(String serviceName)` | String | null | Service Name (Oracle, Tibero) - Service Name 형식 접속 |
+| `jdbcUrl(String jdbcUrl)` | String | null | 직접 JDBC URL 지정 (host/port/database 등 무시) |
 | `user(String user)` | String | 필수 | 데이터베이스 사용자명 |
 | `password(String password)` | String | 필수 | 데이터베이스 비밀번호 |
 | `minPoolSize(int minPoolSize)` | int | 100 | 최소 커넥션 풀 크기 |
@@ -361,8 +363,9 @@ Oracle 데이터베이스용 어댑터입니다.
 
 - JDBC Driver: `oracle.jdbc.OracleDriver`
 - 기본 포트: 1521
-- SID/Service Name 지원
-- 시퀀스 사용 (seq_load_test)
+- SID 형식 및 Service Name 형식 지원
+- 직접 JDBC URL 지정 지원
+- 시퀀스 사용 (LOAD_TEST_SEQ)
 
 #### 주요 구현
 
@@ -372,10 +375,25 @@ String getDriverClassName() {
 }
 
 String buildJdbcUrl(DatabaseConfig config) {
+    // service_name이 설정된 경우 service_name 형식 사용
+    if (config.getServiceName() != null && !config.getServiceName().isEmpty()) {
+        return String.format("jdbc:oracle:thin:@//%s:%d/%s",
+                config.getHost(), config.getDefaultPort(), config.getServiceName());
+    }
+    // SID 형식 사용 (기존 방식)
+    String sid = config.getSid() != null ? config.getSid() : config.getDatabase();
     return String.format("jdbc:oracle:thin:@%s:%d:%s",
-        config.getHost(), config.getPort(), config.getSid());
+            config.getHost(), config.getDefaultPort(), sid);
 }
 ```
+
+#### 연결 URL 형식
+
+| 옵션 | JDBC URL 형식 |
+|------|---------------|
+| `--sid` | `jdbc:oracle:thin:@host:port:SID` |
+| `--service-name` | `jdbc:oracle:thin:@//host:port/SERVICE_NAME` |
+| `--jdbc-url` | 사용자 지정 URL 그대로 사용 |
 
 ---
 
@@ -464,8 +482,9 @@ Tibero 데이터베이스용 어댑터입니다.
 
 - JDBC Driver: `com.tmax.tibero.jdbc.TbDriver`
 - 기본 포트: 8629
-- SID 지원
-- 시퀀스 사용
+- SID 형식 및 Service Name 형식 지원
+- 직접 JDBC URL 지정 지원
+- 시퀀스 사용 (LOAD_TEST_SEQ)
 
 #### 주요 구현
 
@@ -475,10 +494,25 @@ String getDriverClassName() {
 }
 
 String buildJdbcUrl(DatabaseConfig config) {
+    // service_name이 설정된 경우 service_name 형식 사용
+    if (config.getServiceName() != null && !config.getServiceName().isEmpty()) {
+        return String.format("jdbc:tibero:thin:@//%s:%d/%s",
+                config.getHost(), config.getDefaultPort(), config.getServiceName());
+    }
+    // SID 형식 사용 (기존 방식)
+    String sid = config.getSid() != null ? config.getSid() : config.getDatabase();
     return String.format("jdbc:tibero:thin:@%s:%d:%s",
-        config.getHost(), config.getPort(), config.getSid());
+            config.getHost(), config.getDefaultPort(), sid);
 }
 ```
+
+#### 연결 URL 형식
+
+| 옵션 | JDBC URL 형식 |
+|------|---------------|
+| `--sid` | `jdbc:tibero:thin:@host:port:SID` |
+| `--service-name` | `jdbc:tibero:thin:@//host:port/SERVICE_NAME` |
+| `--jdbc-url` | 사용자 지정 URL 그대로 사용 |
 
 ---
 
@@ -630,7 +664,9 @@ System.out.println("Wait Time (ms): " + stats.get("waitTimeMs"));
 |------|------|--------|
 | `--port` | 포트 번호 | DB 기본 포트 |
 | `--database` | 데이터베이스 이름 | 필수 (Oracle, Tibero 제외) |
-| `--sid` | SID/Service 이름 | 필수 (Oracle, Tibero) |
+| `--sid` | SID (Oracle, Tibero) - SID 형식 접속 | 필수 (Oracle, Tibero) |
+| `--service-name` | Service Name (Oracle, Tibero) - Service Name 형식 접속 | --sid 대신 사용 가능 |
+| `--jdbc-url` | 직접 JDBC URL 지정 | host/port/database 등 무시 |
 
 ### 6.3 테스트 옵션
 
