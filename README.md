@@ -1036,7 +1036,10 @@ No warmup period. Test duration: 60 seconds
 - `tibero6-jdbc.jar`를 fat JAR 내 리소스로 임베드 (클래스가 아닌 JAR 파일 그대로)
 - `--driver-path` 없이도 Tibero 6/7 서버 모두 자동 연결 가능
 - 기존 `--driver-path` 옵션은 그대로 유지 (명시적 외부 드라이버 우선)
+- HikariCP `DriverDataSource` classloader 충돌 우회: `SimpleDriverDataSource` 래퍼로 child-first classloader에서 로드한 드라이버를 직접 사용
+- Tibero 6이 지원하지 않는 service name URL(`@//host:port/service`)을 SID 형식(`@host:port:sid`)으로 자동 변환
 - 다른 DB(Oracle, PostgreSQL, MySQL 등)에는 영향 없음
+- 검증 완료: Tibero 6 서버 대상 355 TPS, 0 에러 확인
 
 ### v0.2.4 (2025-01-06)
 

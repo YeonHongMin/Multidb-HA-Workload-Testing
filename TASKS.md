@@ -59,6 +59,8 @@
 | FEAT-022 | `AbstractDatabaseAdapter.loadExternalDriver()` 가시성 private→protected 변경 | 중간 | ✅ 완료됨 |
 | FEAT-023 | 임베디드 tibero6-jdbc.jar temp 파일 추출 (`extractEmbeddedDriver()`) | 높음 | ✅ 완료됨 |
 | FEAT-024 | 예외 체인 JDBC-12030 문자열 검색 (`isDriverVersionMismatch()`) | 중간 | ✅ 완료됨 |
+| FEAT-025 | HikariCP DriverDataSource classloader 충돌 우회 (`SimpleDriverDataSource` 래퍼) | 높음 | ✅ 완료됨 |
+| FEAT-026 | Tibero 6 fallback 시 service name URL → SID URL 자동 변환 (`convertToSidUrl()`) | 높음 | ✅ 완료됨 |
 | DOC-003 | README.md v0.2.5 변경 이력 추가 (Tibero 6 auto-fallback) | 낮음 | ✅ 완료됨 |
 
 **상세 내용:**
@@ -69,7 +71,20 @@
 - **동작 흐름**:
   1. `--driver-path` 지정 시 → 부모 클래스 로직 그대로 (외부 드라이버 사용)
   2. 미지정 시 → Tibero 7 번들 드라이버로 시도
-  3. `JDBC-12030` 에러 → 리소스에서 `tibero6-jdbc.jar` temp 추출 → `DriverOverrideClassLoader`로 로드 → 재연결
+  3. `JDBC-12030` 에러 → 리소스에서 `tibero6-jdbc.jar` temp 추출 → child-first classloader로 드라이버 로드
+  4. `SimpleDriverDataSource` 래퍼로 HikariCP의 `DriverDataSource`를 완전히 우회하여 연결
+
+#### FEAT-025: HikariCP DriverDataSource Classloader 충돌 우회
+- **문제점**: HikariCP `DriverDataSource`가 `DriverManager.getDrivers()`를 먼저 조회하여, 첫 번째 시도에서 자동 등록된 shaded Tibero 7 드라이버를 계속 사용. thread context classloader로 child-first classloader를 설정해도 우회 불가
+- **해결책**: `SimpleDriverDataSource` 래퍼 클래스를 구현하여 child-first classloader에서 로드한 Tibero 6 드라이버 인스턴스의 `driver.connect()`를 직접 호출. `HikariConfig.setDataSource()`로 전달하여 `DriverDataSource` 자체를 사용하지 않음
+- **영향**: HikariCP의 모든 풀 관리 기능(idle timeout, keepalive, leak detection 등)은 그대로 동작
+
+#### FEAT-026: Service Name URL → SID URL 자동 변환
+- **문제점**: Tibero 6 JDBC 드라이버의 URL 파서(`TbUrlParser`)가 service name 형식(`@//host:port/service`)을 지원하지 않음 — `JDBC-90605: Invalid URL` 에러 발생
+- **해결책**: fallback 시 `convertToSidUrl()` 메서드로 URL 자동 변환
+  - 변환 전: `jdbc:tibero:thin:@//192.168.0.153:8629/TPROD`
+  - 변환 후: `jdbc:tibero:thin:@192.168.0.153:8629:TPROD`
+- **검증**: Tibero 6 서버 대상 355 TPS, 0 에러 확인
   4. 다른 에러 → 그대로 throw
 - **영향**: 다른 DB 어댑터에는 영향 없음 — fallback 로직은 TiberoAdapter에만 존재
 

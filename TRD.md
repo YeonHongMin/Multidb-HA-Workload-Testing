@@ -68,6 +68,8 @@
 | DR-004 | Tibero JDBC-12030 에러 감지 시 자동 fallback (Tibero 7 → Tibero 6 드라이버) | ✅ 완료 |
 | DR-005 | 임베디드 드라이버 temp 파일 추출 및 자동 정리 (`deleteOnExit`) | ✅ 완료 |
 | DR-006 | `--driver-path` 명시 시 auto-fallback 비활성화 (사용자 지정 우선) | ✅ 완료 |
+| DR-007 | HikariCP DriverDataSource classloader 충돌 우회 (`SimpleDriverDataSource` 래퍼) | ✅ 완료 |
+| DR-008 | Tibero 6 fallback 시 service name URL → SID URL 자동 변환 | ✅ 완료 |
 
 ### 5. 스키마 관리
 

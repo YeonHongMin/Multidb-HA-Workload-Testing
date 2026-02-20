@@ -4,6 +4,7 @@ com\loadtest\WorkMode.class
 com\loadtest\SingleStoreAdapter.class
 com\loadtest\AbstractDatabaseAdapter.class
 com\loadtest\DatabaseConfig$Builder.class
+com\loadtest\TiberoAdapter$SimpleDriverDataSource.class
 com\loadtest\DatabaseConfig.class
 com\loadtest\TiberoAdapter.class
 com\loadtest\LoadTestWorker.class

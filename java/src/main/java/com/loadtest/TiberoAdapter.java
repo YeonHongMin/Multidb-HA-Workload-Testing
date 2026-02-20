@@ -1,8 +1,14 @@
 package com.loadtest;
 
 import java.io.*;
+import java.net.URL;
 import java.nio.file.Files;
 import java.sql.*;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 /**
  * Tibero JDBC 어댑터 (HikariCP 기반)
@@ -25,17 +31,140 @@ public class TiberoAdapter extends AbstractDatabaseAdapter {
         } catch (Exception e) {
             if (isDriverVersionMismatch(e)) {
                 logger.warn("Tibero 7 driver incompatible with server. Auto-fallback to embedded Tibero 6 driver...");
-                // 실패한 풀 정리
                 closePool();
-                // 리소스에서 tibero6 드라이버 추출 및 로드
                 String tempDriverPath = extractEmbeddedDriver();
-                loadExternalDriver(tempDriverPath);
-                super.createConnectionPool(config);
+                createPoolWithFallbackDriver(config, tempDriverPath);
                 logger.info("Successfully connected using Tibero 6 driver (auto-fallback)");
             } else {
                 throw e;
             }
         }
+    }
+
+    /**
+     * Tibero 6 fallback 드라이버로 직접 커넥션 풀을 생성합니다.
+     * HikariCP의 DriverDataSource는 DriverManager/classloader를 통해 드라이버를 로드하므로,
+     * shaded된 Tibero 7 드라이버와 충돌합니다. 이를 우회하기 위해
+     * child-first classloader로 Tibero 6 드라이버를 직접 로드하고,
+     * SimpleDriverDataSource 래퍼를 통해 HikariCP에 DataSource로 전달합니다.
+     */
+    private void createPoolWithFallbackDriver(DatabaseConfig config, String driverPath) {
+        try {
+            File driverFile = new File(driverPath);
+            URL driverUrl = driverFile.toURI().toURL();
+
+            ClassLoader parentCL = Thread.currentThread().getContextClassLoader();
+            if (parentCL == null) parentCL = getClass().getClassLoader();
+
+            // child-first classloader: com.tmax.tibero 패키지 전체를 tibero6 JAR에서 우선 로드
+            AbstractDatabaseAdapter.DriverOverrideClassLoader classLoader =
+                    new AbstractDatabaseAdapter.DriverOverrideClassLoader(
+                            new URL[]{driverUrl}, parentCL, "com.tmax.tibero");
+
+            Class<?> driverClass = Class.forName("com.tmax.tibero.jdbc.TbDriver", true, classLoader);
+            Driver tibero6Driver = (Driver) driverClass.getDeclaredConstructor().newInstance();
+
+            logger.info("Tibero 6 driver loaded via child-first classloader: {}", driverPath);
+
+            String jdbcUrl = (config.getJdbcUrl() != null && !config.getJdbcUrl().isEmpty())
+                    ? config.getJdbcUrl() : buildJdbcUrl(config);
+
+            Properties connProps = new Properties();
+            if (config.getUser() != null) connProps.setProperty("user", config.getUser());
+            if (config.getPassword() != null) connProps.setProperty("password", config.getPassword());
+
+            // Tibero 6는 service name URL(@//host:port/service)을 지원하지 않음
+            // SID 형식(@host:port:sid)으로 자동 변환
+            jdbcUrl = convertToSidUrl(jdbcUrl);
+
+            // HikariCP 설정 — setDataSource()로 DriverDataSource를 완전히 우회
+            HikariConfig hikariConfig = new HikariConfig();
+            hikariConfig.setDataSource(new SimpleDriverDataSource(tibero6Driver, jdbcUrl, connProps));
+            hikariConfig.setMinimumIdle(config.getMinPoolSize());
+            hikariConfig.setMaximumPoolSize(config.getMaxPoolSize());
+            hikariConfig.setConnectionTimeout(config.getConnectionTimeoutMs());
+            hikariConfig.setValidationTimeout(config.getValidationTimeoutMs());
+            hikariConfig.setMaxLifetime(TimeUnit.SECONDS.toMillis(config.getMaxLifetimeSeconds()));
+            hikariConfig.setIdleTimeout(TimeUnit.SECONDS.toMillis(config.getIdleTimeoutSeconds()));
+            hikariConfig.setKeepaliveTime(TimeUnit.SECONDS.toMillis(config.getKeepaliveTimeSeconds()));
+            hikariConfig.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(config.getLeakDetectionThresholdSeconds()));
+            hikariConfig.setConnectionTestQuery(getValidationQuery());
+            hikariConfig.setPoolName("HikariPool-TIBERO");
+            hikariConfig.setAutoCommit(false);
+            configureDataSourceProperties(hikariConfig, config);
+
+            logger.info("Initializing HikariCP connection pool (Tibero 6 fallback)");
+            logger.info("  - JDBC URL: {}", jdbcUrl);
+            logger.info("  - Min Pool Size: {}", config.getMinPoolSize());
+            logger.info("  - Max Pool Size: {}", config.getMaxPoolSize());
+
+            this.dataSource = new HikariDataSource(hikariConfig);
+
+            logger.info("HikariCP connection pool initialized successfully (Tibero 6 fallback)");
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to create pool with Tibero 6 fallback driver: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * JDBC Driver를 직접 사용하는 간단한 DataSource 래퍼.
+     * HikariCP의 DriverDataSource(DriverManager/classloader 기반)를 우회하여
+     * child-first classloader로 로드한 드라이버 인스턴스를 직접 사용합니다.
+     */
+    private static class SimpleDriverDataSource implements javax.sql.DataSource {
+        private final Driver driver;
+        private final String url;
+        private final Properties properties;
+
+        SimpleDriverDataSource(Driver driver, String url, Properties properties) {
+            this.driver = driver;
+            this.url = url;
+            this.properties = properties;
+        }
+
+        @Override
+        public Connection getConnection() throws SQLException {
+            return driver.connect(url, properties);
+        }
+
+        @Override
+        public Connection getConnection(String username, String password) throws SQLException {
+            Properties props = new Properties(this.properties);
+            if (username != null) props.setProperty("user", username);
+            if (password != null) props.setProperty("password", password);
+            return driver.connect(url, props);
+        }
+
+        @Override public java.io.PrintWriter getLogWriter() { return null; }
+        @Override public void setLogWriter(java.io.PrintWriter out) {}
+        @Override public void setLoginTimeout(int seconds) {}
+        @Override public int getLoginTimeout() { return 0; }
+        @Override public java.util.logging.Logger getParentLogger() { return null; }
+        @Override public <T> T unwrap(Class<T> iface) throws SQLException { throw new SQLException("Not a wrapper"); }
+        @Override public boolean isWrapperFor(Class<?> iface) { return false; }
+    }
+
+    /**
+     * Tibero service name URL을 SID 형식으로 변환합니다.
+     * Tibero 6 JDBC 드라이버는 service name URL(@//host:port/service)을 지원하지 않으므로,
+     * SID 형식(@host:port:sid)으로 변환합니다.
+     *
+     * 예: jdbc:tibero:thin:@//192.168.0.153:8629/TPROD
+     *   → jdbc:tibero:thin:@192.168.0.153:8629:TPROD
+     */
+    private String convertToSidUrl(String jdbcUrl) {
+        // @//host:port/service 패턴을 @host:port:sid 패턴으로 변환
+        if (jdbcUrl != null && jdbcUrl.contains("@//")) {
+            String converted = jdbcUrl.replace("@//", "@");
+            // 마지막 '/'를 ':'로 변환 (host:port/service → host:port:sid)
+            int lastSlash = converted.lastIndexOf('/');
+            if (lastSlash > 0) {
+                converted = converted.substring(0, lastSlash) + ":" + converted.substring(lastSlash + 1);
+            }
+            logger.info("Converted service name URL to SID format for Tibero 6: {}", converted);
+            return converted;
+        }
+        return jdbcUrl;
     }
 
     /**

@@ -493,6 +493,45 @@ tbboot nomount
 tbmount
 ```
 
+#### JDBC-12030: 드라이버 버전 불일치 (Auto-Fallback)
+```
+Error: JDBC-12030:Unable to handle unexpected incoming message type 348.
+```
+
+**원인**
+- Tibero 7 JDBC 드라이버로 Tibero 6 서버에 연결 시도
+- 드라이버와 서버 간 프로토콜 버전이 불일치
+
+**해결 방법 (v0.2.5 자동 처리)**
+
+v0.2.5부터 **Auto-Fallback**이 내장되어 있어 별도 조치 없이 자동으로 해결됩니다:
+1. Tibero 7 번들 드라이버로 연결 시도
+2. `JDBC-12030` 에러 감지
+3. 내장된 `tibero6-jdbc.jar`를 temp 파일로 추출
+4. child-first classloader + `SimpleDriverDataSource` 래퍼로 Tibero 6 드라이버 로드
+5. service name URL을 SID 형식으로 자동 변환
+6. Tibero 6 드라이버로 재연결 성공
+
+```
+# 로그 출력 예시
+Tibero 7 driver incompatible with server. Auto-fallback to embedded Tibero 6 driver...
+Extracted embedded Tibero 6 driver to: /tmp/tibero6-jdbc-xxx.jar
+Tibero 6 driver loaded via child-first classloader: /tmp/tibero6-jdbc-xxx.jar
+Converted service name URL to SID format for Tibero 6: jdbc:tibero:thin:@host:port:sid
+Successfully connected using Tibero 6 driver (auto-fallback)
+```
+
+수동으로 외부 드라이버를 지정하려면 `--driver-path` 옵션을 사용하세요:
+```bash
+java -jar multi-db-load-tester-0.2.5.jar \
+    --db-type tibero \
+    --host localhost --port 8629 --sid tibero \
+    --driver-path /path/to/tibero6-jdbc.jar \
+    --user app --password app
+```
+
+---
+
 #### 데이터베이스 이름 오류
 ```
 Error: ORA-12154: TNS:could not resolve the connect identifier
