@@ -22,6 +22,7 @@ public class DatabaseConfig {
     private int keepaliveTimeSeconds = 30;  // 유휴 커넥션 검증 주기 (HikariCP 최소값: 30초)
     private int connectionTimeoutMs = 30000;
     private int validationTimeoutMs = 5000;
+    private String driverPath;
 
     public DatabaseConfig() {}
 
@@ -127,6 +128,11 @@ public class DatabaseConfig {
 
         public Builder validationTimeoutMs(int validationTimeoutMs) {
             config.validationTimeoutMs = validationTimeoutMs;
+            return this;
+        }
+
+        public Builder driverPath(String driverPath) {
+            config.driverPath = driverPath;
             return this;
         }
 
@@ -278,6 +284,14 @@ public class DatabaseConfig {
 
     public void setValidationTimeoutMs(int validationTimeoutMs) {
         this.validationTimeoutMs = validationTimeoutMs;
+    }
+
+    public String getDriverPath() {
+        return driverPath;
+    }
+
+    public void setDriverPath(String driverPath) {
+        this.driverPath = driverPath;
     }
 
     public int getDefaultPort() {

@@ -1,5 +1,7 @@
 package com.loadtest;
 
+import java.io.*;
+import java.nio.file.Files;
 import java.sql.*;
 
 /**
@@ -9,6 +11,71 @@ import java.sql.*;
  * mvn install:install-file -Dfile=tibero7-jdbc.jar -DgroupId=com.tmax.tibero -DartifactId=tibero-jdbc -Dversion=7.0 -Dpackaging=jar
  */
 public class TiberoAdapter extends AbstractDatabaseAdapter {
+
+    @Override
+    public void createConnectionPool(DatabaseConfig config) {
+        // --driver-path가 명시적으로 지정된 경우 부모 로직 그대로
+        if (config.getDriverPath() != null && !config.getDriverPath().isEmpty()) {
+            super.createConnectionPool(config);
+            return;
+        }
+
+        try {
+            super.createConnectionPool(config);
+        } catch (Exception e) {
+            if (isDriverVersionMismatch(e)) {
+                logger.warn("Tibero 7 driver incompatible with server. Auto-fallback to embedded Tibero 6 driver...");
+                // 실패한 풀 정리
+                closePool();
+                // 리소스에서 tibero6 드라이버 추출 및 로드
+                String tempDriverPath = extractEmbeddedDriver();
+                loadExternalDriver(tempDriverPath);
+                super.createConnectionPool(config);
+                logger.info("Successfully connected using Tibero 6 driver (auto-fallback)");
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * 예외 체인에서 JDBC-12030 (드라이버 버전 불일치) 에러를 검색
+     */
+    private boolean isDriverVersionMismatch(Throwable e) {
+        Throwable current = e;
+        while (current != null) {
+            String msg = current.getMessage();
+            if (msg != null && msg.contains("JDBC-12030")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    /**
+     * 내장된 tibero6-jdbc.jar 리소스를 temp 파일로 추출
+     */
+    private String extractEmbeddedDriver() {
+        try (InputStream is = getClass().getResourceAsStream("/drivers/tibero6-jdbc.jar")) {
+            if (is == null) {
+                throw new RuntimeException("Embedded Tibero 6 driver not found in JAR resources (drivers/tibero6-jdbc.jar)");
+            }
+            File tempFile = Files.createTempFile("tibero6-jdbc-", ".jar").toFile();
+            tempFile.deleteOnExit();
+            try (OutputStream os = new FileOutputStream(tempFile)) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+            }
+            logger.info("Extracted embedded Tibero 6 driver to: {}", tempFile.getAbsolutePath());
+            return tempFile.getAbsolutePath();
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to extract embedded Tibero 6 driver", ex);
+        }
+    }
 
     @Override
     public String buildJdbcUrl(DatabaseConfig config) {

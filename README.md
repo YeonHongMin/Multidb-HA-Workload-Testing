@@ -1,4 +1,4 @@
-# Multi-Database Load Tester (Java) v0.2.4
+# Multi-Database Load Tester (Java) v0.2.5
 
 Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore를 지원하는 고성능 멀티스레드 데이터베이스 부하 테스트 도구 (HikariCP 기반)
 
@@ -302,13 +302,13 @@ nc -zv 192.168.0.100 1521
 
 ```bash
 # 기본 실행 (2GB 힙)
-java -Xms1g -Xmx2g -jar multi-db-load-tester-0.2.4.jar ...
+java -Xms1g -Xmx2g -jar multi-db-load-tester-0.2.5.jar ...
 
 # 고부하 테스트 (4GB 힙, 500+ 스레드)
-java -Xms2g -Xmx4g -jar multi-db-load-tester-0.2.4.jar ...
+java -Xms2g -Xmx4g -jar multi-db-load-tester-0.2.5.jar ...
 
 # 초고부하 테스트 (8GB 힙, 1000+ 스레드)
-java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-0.2.4.jar ...
+java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-0.2.5.jar ...
 ```
 
 #### 스레드 수에 따른 권장 리소스
@@ -390,7 +390,7 @@ mvn clean package -DskipTests
 
 ```bash
 # 기본 실행 (--truncate로 깨끗한 상태에서 시작, warmup 30초 기본값)
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test_user --password test_pass \
@@ -399,7 +399,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
     --test-duration 60
 
 # warmup 없이 실행
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test_user --password test_pass \
@@ -414,7 +414,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 ### 3. 도움말
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.4.jar --help
+java -jar java/target/multi-db-load-tester-0.2.5.jar --help
 ```
 
 ---
@@ -441,7 +441,7 @@ v0.2부터 테이블이 이미 존재하면 **자동으로 재사용**됩니다 
 
 ```bash
 # 1단계: insert-only로 데이터 삽입 (--truncate로 깨끗한 상태에서 시작)
-java -jar target/multi-db-load-tester-0.2.4.jar \
+java -jar target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
@@ -451,7 +451,7 @@ java -jar target/multi-db-load-tester-0.2.4.jar \
     --warmup 10
 
 # 2단계: update-only 실행 (--truncate 없이 기존 데이터 유지)
-java -jar target/multi-db-load-tester-0.2.4.jar \
+java -jar target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
@@ -460,7 +460,7 @@ java -jar target/multi-db-load-tester-0.2.4.jar \
     --warmup 10
 
 # 3단계: delete-only 실행 (--truncate 없이 기존 데이터 유지)
-java -jar target/multi-db-load-tester-0.2.4.jar \
+java -jar target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
@@ -479,7 +479,7 @@ java -jar target/multi-db-load-tester-0.2.4.jar \
 
 ```bash
 # SID 형식
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test_user --password pass \
@@ -489,7 +489,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
     --warmup 30
 
 # Service Name 형식
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --service-name XEPDB1 \
     --user test_user --password pass \
@@ -502,7 +502,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 ### PostgreSQL
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type postgresql \
     --host localhost --port 5432 --database testdb \
     --user test_user --password pass \
@@ -515,7 +515,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 ### MySQL
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type mysql \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
@@ -530,7 +530,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 ### SQL Server
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type sqlserver \
     --host localhost --port 1433 --database testdb \
     --user sa --password pass \
@@ -544,7 +544,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 
 ```bash
 # SID 형식
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type tibero \
     --host 192.168.0.140 --port 8629 --sid tibero \
     --user test_user --password pass \
@@ -554,7 +554,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
     --warmup 30
 
 # Service Name 형식
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type tibero \
     --host 192.168.0.140 --port 8629 --service-name tibero_svc \
     --user test_user --password pass \
@@ -567,7 +567,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 ### IBM DB2
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type db2 \
     --host localhost --port 50000 --database testdb \
     --user db2inst1 --password pass \
@@ -580,7 +580,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 ### SingleStore
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type singlestore \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
@@ -602,7 +602,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 
 ```bash
 # Oracle RAC/SCAN 환경
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --jdbc-url "jdbc:oracle:thin:@//scan-ip:1521/SERVICE_NAME" \
     --user test --password pass \
@@ -611,49 +611,49 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
     --test-duration 60
 
 # Oracle TNS 형식
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --jdbc-url "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=host1)(PORT=1521))(ADDRESS=(PROTOCOL=TCP)(HOST=host2)(PORT=1521))(LOAD_BALANCE=yes)(CONNECT_DATA=(SERVICE_NAME=PROD)))" \
     --user test --password pass \
     --thread-count 100
 
 # PostgreSQL with SSL
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type postgresql \
     --jdbc-url "jdbc:postgresql://localhost:5432/testdb?ssl=true&sslmode=require" \
     --user test --password pass \
     --thread-count 50
 
 # MySQL with options
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type mysql \
     --jdbc-url "jdbc:mysql://localhost:3306/testdb?useSSL=false&serverTimezone=UTC&rewriteBatchedStatements=true" \
     --user root --password pass \
     --thread-count 50
 
 # SQL Server with instance name
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type sqlserver \
     --jdbc-url "jdbc:sqlserver://localhost\\SQLEXPRESS;databaseName=testdb;encrypt=false" \
     --user sa --password pass \
     --thread-count 100
 
 # Tibero
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type tibero \
     --jdbc-url "jdbc:tibero:thin:@//192.168.0.100:8629/tibero" \
     --user test --password pass \
     --thread-count 100
 
 # IBM DB2
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type db2 \
     --jdbc-url "jdbc:db2://localhost:50000/testdb:currentSchema=DB2INST1;" \
     --user db2inst1 --password pass \
     --thread-count 100
 
 # SingleStore
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type singlestore \
     --jdbc-url "jdbc:singlestore://localhost:3306/testdb?allowPublicKeyRetrieval=true" \
     --user root --password pass \
@@ -668,7 +668,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 
 ```bash
 # 기존 데이터 삭제 후 깨끗한 상태에서 테스트 시작
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -682,7 +682,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 ### 워밍업 + Ramp-up + Rate Limiting
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type postgresql \
     --host localhost --port 5432 --database testdb \
     --user test --password pass \
@@ -697,7 +697,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 ### 배치 INSERT
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type mysql \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
@@ -711,7 +711,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
 
 ```bash
 # JSON 형식
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -720,7 +720,7 @@ java -jar java/target/multi-db-load-tester-0.2.4.jar \
     --output-file results/test_result.json
 
 # CSV 형식
-java -jar java/target/multi-db-load-tester-0.2.4.jar \
+java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -1028,6 +1028,16 @@ No warmup period. Test duration: 60 seconds
 
 ## 버전 히스토리
 
+### v0.2.5 (2025-02-20)
+
+**Tibero 6 JDBC 드라이버 Auto-Fallback**
+
+- Tibero 6 서버 연결 시 `JDBC-12030` 에러 자동 감지 후 내장 Tibero 6 드라이버로 자동 전환
+- `tibero6-jdbc.jar`를 fat JAR 내 리소스로 임베드 (클래스가 아닌 JAR 파일 그대로)
+- `--driver-path` 없이도 Tibero 6/7 서버 모두 자동 연결 가능
+- 기존 `--driver-path` 옵션은 그대로 유지 (명시적 외부 드라이버 우선)
+- 다른 DB(Oracle, PostgreSQL, MySQL 등)에는 영향 없음
+
 ### v0.2.4 (2025-01-06)
 
 **Oracle/Tibero Service Name 접속 지원**
@@ -1049,15 +1059,15 @@ No warmup period. Test duration: 60 seconds
 **사용 예시:**
 ```bash
 # SID 형식 (기존 방식)
-java -jar multi-db-load-tester-0.2.4.jar --db-type oracle --host localhost \
+java -jar multi-db-load-tester-0.2.5.jar --db-type oracle --host localhost \
     --port 1521 --sid ORCL --user test --password pass
 
 # Service Name 형식
-java -jar multi-db-load-tester-0.2.4.jar --db-type oracle --host localhost \
+java -jar multi-db-load-tester-0.2.5.jar --db-type oracle --host localhost \
     --port 1521 --service-name XEPDB1 --user test --password pass
 
 # 직접 JDBC URL 지정 (RAC/SCAN 환경)
-java -jar multi-db-load-tester-0.2.4.jar --db-type oracle \
+java -jar multi-db-load-tester-0.2.5.jar --db-type oracle \
     --jdbc-url "jdbc:oracle:thin:@//scan-ip:1521/SERVICE" \
     --user test --password pass
 ```

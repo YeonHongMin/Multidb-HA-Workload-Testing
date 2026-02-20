@@ -5,7 +5,7 @@
 | 항목 | 내용 |
 |------|------|
 | **프로젝트명** | Multi-Database HA Workload Testing |
-| **버전** | v0.2.4 |
+| **버전** | v0.2.5 |
 | **목적** | 다중 데이터베이스 환경에서 고가용성(HA) 워크로드 부하 테스트 수행 |
 | **언어** | Java 17+ |
 | **빌드 도구** | Apache Maven 3.6+ |
@@ -20,7 +20,7 @@
 | PostgreSQL | 11 | 15+ | postgresql-42.2.9 | 5432 |
 | MySQL | 5.7 | 8.0+ | mysql-connector-j-9.5.0 | 3306 |
 | SQL Server | 2016 | 2019+ | mssql-jdbc-13.2.1.jre11 | 1433 |
-| Tibero | 6 | 7 | tibero7-jdbc | 8629 |
+| Tibero | 6 | 7 | tibero7-jdbc (기본) + tibero6-jdbc (auto-fallback) | 8629 |
 | IBM DB2 | 11.1 | 11.5+ | jcc-12.1.3.0 | 50000 |
 | SingleStore | 7.5 | 8.0+ | singlestore-jdbc-1.2.1 | 3306 |
 
@@ -58,7 +58,18 @@
 | MN-004 | CSV/JSON 형식 결과 내보내기 | ✅ 완료 |
 | MN-005 | 1초 단위 실시간 모니터링 출력 | ✅ 완료 |
 
-### 4. 스키마 관리
+### 4. JDBC 드라이버 관리
+
+| 요구사항 ID | 설명 | 구현 상태 |
+|-------------|------|-----------|
+| DR-001 | 외부 JDBC 드라이버 로딩 (`--driver-path` 옵션) | ✅ 완료 |
+| DR-002 | child-first ClassLoader (DriverOverrideClassLoader) 기반 드라이버 오버라이드 | ✅ 완료 |
+| DR-003 | Tibero 6 JDBC 드라이버 fat JAR 내 리소스 임베드 (`drivers/tibero6-jdbc.jar`) | ✅ 완료 |
+| DR-004 | Tibero JDBC-12030 에러 감지 시 자동 fallback (Tibero 7 → Tibero 6 드라이버) | ✅ 완료 |
+| DR-005 | 임베디드 드라이버 temp 파일 추출 및 자동 정리 (`deleteOnExit`) | ✅ 완료 |
+| DR-006 | `--driver-path` 명시 시 auto-fallback 비활성화 (사용자 지정 우선) | ✅ 완료 |
+
+### 5. 스키마 관리
 
 | 요구사항 ID | 설명 | 구현 상태 |
 |-------------|------|-----------|

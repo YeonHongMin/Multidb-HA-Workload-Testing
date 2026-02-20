@@ -14,13 +14,13 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Multi-Database Load Tester v0.2.4 (HikariCP Version)
+ * Multi-Database Load Tester v0.2.5 (HikariCP Version)
  *
  * 지원 데이터베이스: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore
  */
 public class MultiDBLoadTester {
     private static final Logger logger = LoggerFactory.getLogger(MultiDBLoadTester.class);
-    private static final String VERSION = "0.2.4";
+    private static final String VERSION = "0.2.5";
 
     private final DatabaseConfig config;
     private DatabaseAdapter dbAdapter;
@@ -322,6 +322,7 @@ public class MultiDBLoadTester {
                     .idleCheckIntervalSeconds(Integer.parseInt(cmd.getOptionValue("idle-check-interval", "30")))
                     .idleTimeoutSeconds(Integer.parseInt(cmd.getOptionValue("idle-timeout", "30")))
                     .keepaliveTimeSeconds(Integer.parseInt(cmd.getOptionValue("keepalive-time", "30")))
+                    .driverPath(cmd.getOptionValue("driver-path"))
                     .build();
 
             MultiDBLoadTester tester = new MultiDBLoadTester(config);
@@ -379,6 +380,8 @@ public class MultiDBLoadTester {
                 .hasArg().desc("Service name (Oracle, Tibero) - service name format").build());
         options.addOption(Option.builder().longOpt("jdbc-url")
                 .hasArg().desc("Direct JDBC URL (overrides host/port/database/sid/service-name)").build());
+        options.addOption(Option.builder().longOpt("driver-path")
+                .hasArg().desc("External JDBC driver JAR path (overrides bundled driver)").build());
 
         // 테스트 옵션
         options.addOption(Option.builder().longOpt("thread-count")

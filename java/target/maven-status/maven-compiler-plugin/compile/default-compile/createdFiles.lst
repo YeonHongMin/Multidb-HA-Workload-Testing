@@ -13,6 +13,7 @@ com\loadtest\DatabaseAdapter.class
 com\loadtest\SQLServerAdapter.class
 com\loadtest\PerformanceCounter.class
 com\loadtest\LoadTestWorker$1.class
+com\loadtest\AbstractDatabaseAdapter$DriverOverrideClassLoader.class
 com\loadtest\OracleAdapter.class
 com\loadtest\MonitorThread.class
 com\loadtest\ResultExporter.class

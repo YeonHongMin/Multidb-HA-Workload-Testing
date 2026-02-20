@@ -4,9 +4,9 @@
 ## 문서 정보
 | 항목 | 설명 |
 |------|-------------|
-| 문서 버전 | 0.2.4 |
+| 문서 버전 | 0.2.5 |
 | 프로젝트 이름 | 멀티 데이터베이스 워크로드 테스트 도구 (Java/HikariCP) |
-| 현재 버전 | v0.2.4 |
+| 현재 버전 | v0.2.5 |
 | 최종 업데이트 | 2025-12-29 |
 | 문서 관리자 | 개발팀 |
 
@@ -23,15 +23,15 @@
 
 ---
 
-## 2. 버전 0.2.4 작업
+## 2. 버전 0.2.5 작업
 
-### 2.1 버그 수정 (v0.2.4)
+### 2.1 버그 수정 (v0.2.5)
 
 | 작업 ID | 설명 | 우선순위 | 상태 | 담당자 |
 |---------|-------------|----------|--------|-------------|
 | BUG-001 | SingleStore 풀 크기가 기본적으로 32로 제한됨 | 낮음 | ✅ 문서화됨 | 개발팀 |
 
-### 2.2 구현된 기능 (v0.2.4)
+### 2.2 구현된 기능 (v0.2.5)
 
 | 작업 ID | 설명 | 우선순위 | 상태 |
 |---------|-------------|----------|--------|
@@ -49,6 +49,29 @@
 - **설명**: SingleStoreAdapter.java 클래스 구현
 - **기능**: SingleStore 전용 DDL 생성, 연결 풀 구성, 데이터베이스 작업 지원
 - **영향**: 총 7개 데이터베이스 지원 (Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore)
+
+### 2.3 Tibero 6 JDBC Auto-Fallback (v0.2.5)
+
+| 작업 ID | 설명 | 우선순위 | 상태 |
+|---------|-------------|----------|--------|
+| FEAT-020 | `tibero6-jdbc.jar`를 fat JAR 리소스로 임베드 (pom.xml resources 설정) | 높음 | ✅ 완료됨 |
+| FEAT-021 | `TiberoAdapter.createConnectionPool()` 오버라이드 — JDBC-12030 auto-fallback 로직 | 높음 | ✅ 완료됨 |
+| FEAT-022 | `AbstractDatabaseAdapter.loadExternalDriver()` 가시성 private→protected 변경 | 중간 | ✅ 완료됨 |
+| FEAT-023 | 임베디드 tibero6-jdbc.jar temp 파일 추출 (`extractEmbeddedDriver()`) | 높음 | ✅ 완료됨 |
+| FEAT-024 | 예외 체인 JDBC-12030 문자열 검색 (`isDriverVersionMismatch()`) | 중간 | ✅ 완료됨 |
+| DOC-003 | README.md v0.2.5 변경 이력 추가 (Tibero 6 auto-fallback) | 낮음 | ✅ 완료됨 |
+
+**상세 내용:**
+
+#### FEAT-021: Tibero 6 Auto-Fallback 로직
+- **문제점**: Tibero JDBC 드라이버는 서버 버전과 정확히 매칭되어야 하며, fat JAR에 번들된 Tibero 7 드라이버로 Tibero 6 서버에 연결하면 `JDBC-12030` 에러 발생
+- **해결책**: `TiberoAdapter.createConnectionPool()`에서 기본(Tibero 7) 드라이버로 연결 시도 → `JDBC-12030` 에러 시 내장 Tibero 6 드라이버 자동 추출 및 재연결
+- **동작 흐름**:
+  1. `--driver-path` 지정 시 → 부모 클래스 로직 그대로 (외부 드라이버 사용)
+  2. 미지정 시 → Tibero 7 번들 드라이버로 시도
+  3. `JDBC-12030` 에러 → 리소스에서 `tibero6-jdbc.jar` temp 추출 → `DriverOverrideClassLoader`로 로드 → 재연결
+  4. 다른 에러 → 그대로 throw
+- **영향**: 다른 DB 어댑터에는 영향 없음 — fallback 로직은 TiberoAdapter에만 존재
 
 ---
 
@@ -490,9 +513,9 @@ FEAT-012 ~ FEAT-017 (v0.2) ─────┘       │       │       │
                                           │       │       │
 FEAT-006 ~ FEAT-008 (v0.2.2) ───────────┘       │       │
                                                   │       │
-FEAT-001 ~ FEAT-005 (v0.2.4) ────────────────────┘       │
+FEAT-001 ~ FEAT-005 (v0.2.5) ────────────────────┘       │
                                                           │
-                                    [v0.2.4 완료]         │
+                                    [v0.2.5 완료]         │
                                        │                  │
                                        ▼                  │
                               FEAT-200 (분산 테스트) ────┘
@@ -566,6 +589,7 @@ FEAT-001 ~ FEAT-005 (v0.2.4) ─────────────────
 | v0.2 | 2025-12-15 | 0 | 7 | 1일 |
 | v0.2.2 | 2025-12-19 | 0 | 2 | 4일 |
 | v0.2.4 | 2025-12-29 | 0 | 5 | 10일 |
+| v0.2.5 | 2025-02-20 | 0 | 5 | - |
 | v0.3.0 | 2025년 1분기 | TBD | TBD | TBD |
 | v0.4.0 | 2025년 2분기 | TBD | TBD | TBD |
 

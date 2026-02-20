@@ -6,7 +6,7 @@
 
     <groupId>com.loadtest</groupId>
     <artifactId>multi-db-load-tester</artifactId>
-    <version>0.2.4</version>
+    <version>0.2.5</version>
     <packaging>jar</packaging>
 
     <name>Multi-Database Load Tester</name>
@@ -109,6 +109,19 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>jre/tibero</directory>
+                <targetPath>drivers</targetPath>
+                <includes>
+                    <include>tibero6-jdbc.jar</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
         <plugins>
             <!-- NOTE: Local JDBC drivers must be installed before build using build.sh -->
             <!-- build.sh runs: mvn install:install-file for each driver in jre/ directory -->

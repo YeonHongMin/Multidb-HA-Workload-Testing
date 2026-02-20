@@ -5,6 +5,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -22,6 +26,11 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
 
     @Override
     public void createConnectionPool(DatabaseConfig config) {
+        // 외부 JDBC 드라이버 로딩
+        if (config.getDriverPath() != null && !config.getDriverPath().isEmpty()) {
+            loadExternalDriver(config.getDriverPath());
+        }
+
         // jdbcUrl이 직접 지정된 경우 우선 사용, 그렇지 않으면 빌드
         String jdbcUrl = (config.getJdbcUrl() != null && !config.getJdbcUrl().isEmpty())
                 ? config.getJdbcUrl()
@@ -171,6 +180,83 @@ public abstract class AbstractDatabaseAdapter implements DatabaseAdapter {
             stmt.execute("TRUNCATE TABLE LOAD_TEST");
             conn.commit();
             logger.info("Table LOAD_TEST truncated successfully");
+        }
+    }
+
+    /**
+     * 외부 JDBC 드라이버 JAR을 로드하여 번들된 드라이버를 오버라이드합니다.
+     * child-first classloader를 사용하여 외부 JAR의 드라이버 클래스가 우선됩니다.
+     */
+    protected void loadExternalDriver(String driverPath) {
+        File driverFile = new File(driverPath);
+        if (!driverFile.exists()) {
+            throw new RuntimeException("Driver file not found: " + driverPath);
+        }
+        if (!driverFile.getName().endsWith(".jar")) {
+            throw new RuntimeException("Driver file must be a JAR file: " + driverPath);
+        }
+
+        try {
+            URL driverUrl = driverFile.toURI().toURL();
+            String driverClassName = getDriverClassName();
+
+            // 드라이버 클래스의 패키지 prefix 결정
+            String packagePrefix = driverClassName.substring(0, driverClassName.lastIndexOf('.'));
+
+            ClassLoader parentClassLoader = Thread.currentThread().getContextClassLoader();
+            if (parentClassLoader == null) {
+                parentClassLoader = getClass().getClassLoader();
+            }
+
+            DriverOverrideClassLoader classLoader = new DriverOverrideClassLoader(
+                    new URL[]{driverUrl}, parentClassLoader, packagePrefix);
+
+            Thread.currentThread().setContextClassLoader(classLoader);
+
+            logger.info("External JDBC driver loaded: {}", driverPath);
+            logger.info("  - Driver class: {} (package prefix: {})", driverClassName, packagePrefix);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Invalid driver path: " + driverPath, e);
+        }
+    }
+
+    /**
+     * Child-first ClassLoader for JDBC driver override.
+     * 드라이버 패키지에 해당하는 클래스만 child-first로 로드하고,
+     * 나머지는 parent-first (기본 위임 모델)을 따릅니다.
+     */
+    static class DriverOverrideClassLoader extends URLClassLoader {
+        private final String driverPackagePrefix;
+
+        DriverOverrideClassLoader(URL[] urls, ClassLoader parent, String driverPackagePrefix) {
+            super(urls, parent);
+            this.driverPackagePrefix = driverPackagePrefix;
+        }
+
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            synchronized (getClassLoadingLock(name)) {
+                // 이미 로드된 클래스 확인
+                Class<?> c = findLoadedClass(name);
+                if (c != null) {
+                    if (resolve) resolveClass(c);
+                    return c;
+                }
+
+                // 드라이버 패키지에 해당하는 클래스는 child-first로 로드
+                if (name.startsWith(driverPackagePrefix)) {
+                    try {
+                        c = findClass(name);
+                        if (resolve) resolveClass(c);
+                        return c;
+                    } catch (ClassNotFoundException e) {
+                        // 외부 JAR에 없으면 parent로 fallback
+                    }
+                }
+
+                // 나머지는 parent-first (기본 동작)
+                return super.loadClass(name, resolve);
+            }
         }
     }
 }
