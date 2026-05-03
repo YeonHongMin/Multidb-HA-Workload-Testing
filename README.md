@@ -1,50 +1,50 @@
 # Multi-Database Load Tester (Java) v0.2.5
 
-Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore를 지원하는 고성능 멀티스레드 데이터베이스 부하 테스트 도구 (HikariCP 기반)
+High-performance multi-threaded database load testing tool supporting Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, and SingleStore (HikariCP-based)
 
-## 주요 특징
+## Key Features
 
-- **7개 데이터베이스 지원**: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore
-- **HikariCP 커넥션 풀**: 고성능 JDBC 커넥션 풀링
-- **고성능 멀티스레딩**: 최대 1000개 동시 세션 지원
-- **6가지 작업 모드**: full, insert-only, select-only, update-only, delete-only, mixed
-- **1초 이내 트랜잭션 측정**: Sub-second TPS 실시간 모니터링
-- **레이턴시 측정**: P50/P95/P99 응답시간 통계
-- **워밍업 기간**: 통계 제외 워밍업 지원 (기본 30초)
-- **스키마 재사용**: 기존 테이블/시퀀스 존재 시 자동 재사용
-- **테이블 초기화**: `--truncate` 옵션으로 깨끗한 상태에서 테스트 (권장)
-- **점진적 부하 증가**: Ramp-up 기능
-- **TPS 제한**: Token Bucket 기반 Rate Limiting
-- **배치 INSERT**: 대량 데이터 삽입 최적화
-- **결과 내보내기**: CSV/JSON 형식 지원
-- **Graceful Shutdown**: Ctrl+C 안전 종료
-- **Leak Detection**: HikariCP 내장 커넥션 누수 감지
+- **7 Database Support**: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore
+- **HikariCP Connection Pool**: High-performance JDBC connection pooling
+- **High-Performance Multi-threading**: Up to 1,000 concurrent sessions supported
+- **6 Operation Modes**: full, insert-only, select-only, update-only, delete-only, mixed
+- **Sub-second Transaction Measurement**: Real-time sub-second TPS monitoring
+- **Latency Measurement**: P50/P95/P99 response time statistics
+- **Warmup Period**: Statistics-excluded warmup support (default 30 seconds)
+- **Schema Reuse**: Automatic reuse of existing tables/sequences
+- **Table Initialization**: Clean state testing with `--truncate` option (recommended)
+- **Gradual Load Increase**: Ramp-up functionality
+- **TPS Limiting**: Token Bucket-based rate limiting
+- **Batch INSERT**: Bulk data insertion optimization
+- **Result Export**: CSV/JSON format support
+- **Graceful Shutdown**: Safe Ctrl+C termination
+- **Leak Detection**: HikariCP built-in connection leak detection
 
 ---
 
-## 사전 요구사항 (Prerequisites)
+## Prerequisites
 
 ### 1. Java Development Kit (JDK) 17+
 
-이 도구는 Java 17 이상이 필요합니다.
+This tool requires Java 17 or higher.
 
-#### 버전 확인
+#### Version Check
 
 ```bash
 java -version
-# openjdk version "17.0.x" 또는 이상 버전 필요
+# openjdk version "17.0.x" or higher required
 ```
 
-#### 설치 방법
+#### Installation
 
 **macOS (Homebrew)**
 
 ```bash
 brew install openjdk@17
-# 또는 최신 LTS 버전
+# Or latest LTS version
 brew install openjdk@21
 
-# 환경 변수 설정
+# Environment variable setup
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)
 export PATH=$JAVA_HOME/bin:$PATH
 ```
@@ -55,7 +55,7 @@ export PATH=$JAVA_HOME/bin:$PATH
 sudo apt update
 sudo apt install openjdk-17-jdk
 
-# 환경 변수 설정 (~/.bashrc 또는 ~/.zshrc에 추가)
+# Environment variable setup (add to ~/.bashrc or ~/.zshrc)
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 export PATH=$JAVA_HOME/bin:$PATH
 ```
@@ -64,35 +64,35 @@ export PATH=$JAVA_HOME/bin:$PATH
 
 ```bash
 sudo yum install java-17-openjdk-devel
-# 또는
+# Or
 sudo dnf install java-17-openjdk-devel
 
-# 환경 변수 설정
+# Environment variable setup
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
 export PATH=$JAVA_HOME/bin:$PATH
 ```
 
 **Windows**
 
-1. [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) 또는 [Adoptium](https://adoptium.net/) 에서 JDK 17+ 다운로드
-2. 설치 후 환경 변수 설정:
-   - `JAVA_HOME`: JDK 설치 경로 (예: `C:\Program Files\Java\jdk-17`)
-   - `PATH`에 `%JAVA_HOME%\bin` 추가
+1. Download JDK 17+ from [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) or [Adoptium](https://adoptium.net/)
+2. Set environment variables after installation:
+   - `JAVA_HOME`: JDK installation path (e.g., `C:\Program Files\Java\jdk-17`)
+   - Add `%JAVA_HOME%\bin` to `PATH`
 
 ---
 
 ### 2. Apache Maven 3.6+
 
-프로젝트 빌드를 위해 Maven이 필요합니다.
+Maven is required for project builds.
 
-#### 버전 확인
+#### Version Check
 
 ```bash
 mvn -version
-# Apache Maven 3.6.x 또는 이상 버전 필요
+# Apache Maven 3.6.x or higher required
 ```
 
-#### 설치 방법
+#### Installation
 
 **macOS (Homebrew)**
 
@@ -111,42 +111,42 @@ sudo apt install maven
 
 ```bash
 sudo yum install maven
-# 또는
+# Or
 sudo dnf install maven
 ```
 
 **Windows**
 
-1. [Apache Maven](https://maven.apache.org/download.cgi) 에서 Binary zip 다운로드
-2. 원하는 위치에 압축 해제 (예: `C:\Program Files\Apache\maven`)
-3. 환경 변수 설정:
-   - `MAVEN_HOME`: Maven 설치 경로
-   - `PATH`에 `%MAVEN_HOME%\bin` 추가
+1. Download Binary zip from [Apache Maven](https://maven.apache.org/download.cgi)
+2. Extract to desired location (e.g., `C:\Program Files\Apache\maven`)
+3. Set environment variables:
+   - `MAVEN_HOME`: Maven installation path
+   - Add `%MAVEN_HOME%\bin` to `PATH`
 
 ---
 
-### 3. 데이터베이스 요구사항
+### 3. Database Requirements
 
-#### 지원 데이터베이스 버전
+#### Supported Database Versions
 
-| 데이터베이스 | 최소 버전 | 권장 버전 | 기본 포트 |
-| ------------ | --------- | --------- | --------- |
-| Oracle       | 19c       | 21c+      | 1521      |
-| PostgreSQL   | 11        | 15+       | 5432      |
-| MySQL        | 5.7       | 8.0+      | 3306      |
-| SQL Server   | 2016      | 2019+     | 1433      |
-| Tibero       | 6         | 7         | 8629      |
-| IBM DB2      | 11.1      | 11.5+     | 50000     |
-| SingleStore  | 7.5       | 8.0+      | 3306      |
+| Database   | Minimum Version | Recommended Version | Default Port |
+| ---------- | --------------- | ------------------- | ------------ |
+| Oracle     | 19c             | 21c+                | 1521         |
+| PostgreSQL | 11              | 15+                 | 5432         |
+| MySQL      | 5.7             | 8.0+                | 3306         |
+| SQL Server | 2016            | 2019+               | 1433         |
+| Tibero     | 6               | 7                   | 8629         |
+| IBM DB2    | 11.1            | 11.5+               | 50000        |
+| SingleStore| 7.5             | 8.0+                | 3306         |
 
-#### 데이터베이스 사용자 권한
+#### Database User Privileges
 
-테스트를 실행하려면 다음 권한이 필요합니다:
+The following privileges are required to run tests:
 
 **Oracle**
 
 ```sql
--- 테스트 사용자 생성 (SYS 또는 SYSTEM으로 접속)
+-- Create test user (connect as SYS or SYSTEM)
 CREATE USER test_user IDENTIFIED BY test_pass;
 GRANT CONNECT, RESOURCE TO test_user;
 GRANT CREATE TABLE, CREATE SEQUENCE TO test_user;
@@ -156,7 +156,7 @@ GRANT UNLIMITED TABLESPACE TO test_user;
 **PostgreSQL**
 
 ```sql
--- 테스트 데이터베이스 및 사용자 생성
+-- Create test database and user
 CREATE USER test_user WITH PASSWORD 'test_pass';
 CREATE DATABASE testdb OWNER test_user;
 GRANT ALL PRIVILEGES ON DATABASE testdb TO test_user;
@@ -165,21 +165,21 @@ GRANT ALL PRIVILEGES ON DATABASE testdb TO test_user;
 **MySQL**
 
 ```sql
--- 테스트 데이터베이스 및 사용자 생성
+-- Create test database and user
 CREATE DATABASE testdb;
 CREATE USER 'test_user'@'%' IDENTIFIED BY 'test_pass';
 GRANT ALL PRIVILEGES ON testdb.* TO 'test_user'@'%';
 FLUSH PRIVILEGES;
 
--- max_connections 설정 확인 (높은 스레드 수 사용 시)
+-- Check max_connections setting (for high thread counts)
 SHOW VARIABLES LIKE 'max_connections';
--- 필요시 증가: SET GLOBAL max_connections = 500;
+-- Increase if needed: SET GLOBAL max_connections = 500;
 ```
 
 **SQL Server**
 
 ```sql
--- 테스트 데이터베이스 및 사용자 생성
+-- Create test database and user
 CREATE DATABASE testdb;
 USE testdb;
 CREATE LOGIN test_user WITH PASSWORD = 'test_pass';
@@ -190,7 +190,7 @@ ALTER ROLE db_owner ADD MEMBER test_user;
 **Tibero**
 
 ```sql
--- 테스트 사용자 생성
+-- Create test user
 CREATE USER test_user IDENTIFIED BY test_pass;
 GRANT CONNECT, RESOURCE TO test_user;
 GRANT CREATE TABLE, CREATE SEQUENCE TO test_user;
@@ -199,7 +199,7 @@ GRANT CREATE TABLE, CREATE SEQUENCE TO test_user;
 **IBM DB2**
 
 ```sql
--- 테스트 데이터베이스 및 사용자 생성
+-- Create test database and user
 CREATE DATABASE testdb;
 CONNECT TO testdb;
 CREATE USER test_user;
@@ -209,24 +209,24 @@ GRANT CONNECT, CREATETAB, IMPLICIT_SCHEMA ON DATABASE TO USER test_user;
 **SingleStore**
 
 ```sql
--- 테스트 데이터베이스 및 사용자 생성
+-- Create test database and user
 CREATE DATABASE testdb;
 CREATE USER 'test_user'@'%' IDENTIFIED BY 'test_pass';
 GRANT ALL PRIVILEGES ON testdb.* TO 'test_user'@'%';
 ```
 
-#### 데이터베이스 서버 설정
+#### Database Server Configuration
 
-높은 동시성 테스트를 위해 데이터베이스 서버 설정 조정이 필요할 수 있습니다:
+Database server settings may need adjustment for high concurrency testing:
 
 **Oracle**
 
 ```sql
--- 최대 세션/프로세스 수 확인
+-- Check maximum sessions/processes
 SHOW PARAMETER sessions;
 SHOW PARAMETER processes;
 
--- 증가 필요 시 (재시작 필요)
+-- Increase if needed (requires restart)
 ALTER SYSTEM SET sessions=1000 SCOPE=SPFILE;
 ALTER SYSTEM SET processes=500 SCOPE=SPFILE;
 ```
@@ -238,7 +238,7 @@ max_connections = 500
 shared_buffers = 256MB
 ```
 
-**MySQL** (`my.cnf` 또는 `my.ini`)
+**MySQL** (`my.cnf` or `my.ini`)
 
 ```ini
 [mysqld]
@@ -249,147 +249,147 @@ max_user_connections = 0
 **SQL Server**
 
 ```sql
--- 기본적으로 32,767 연결 지원
--- 메모리 설정 확인
+-- Supports 32,767 connections by default
+-- Check memory settings
 EXEC sp_configure 'max server memory';
 ```
 
 ---
 
-### 4. 네트워크 요구사항
+### 4. Network Requirements
 
-#### 방화벽 설정
+#### Firewall Configuration
 
-테스트 클라이언트에서 데이터베이스 서버로의 접속을 위해 해당 포트가 열려 있어야 합니다:
+The following ports must be open for test client access to the database server:
 
-| 데이터베이스 | 포트  | 방화벽 명령 (Linux)                             |
-| ------------ | ----- | ----------------------------------------------- |
-| Oracle       | 1521  | `firewall-cmd --add-port=1521/tcp --permanent`  |
-| PostgreSQL   | 5432  | `firewall-cmd --add-port=5432/tcp --permanent`  |
-| MySQL        | 3306  | `firewall-cmd --add-port=3306/tcp --permanent`  |
-| SQL Server   | 1433  | `firewall-cmd --add-port=1433/tcp --permanent`  |
-| Tibero       | 8629  | `firewall-cmd --add-port=8629/tcp --permanent`  |
-| IBM DB2      | 50000 | `firewall-cmd --add-port=50000/tcp --permanent` |
-| SingleStore  | 3306  | `firewall-cmd --add-port=3306/tcp --permanent`  |
+| Database   | Port  | Firewall Command (Linux)                        |
+| ---------- | ----- | ----------------------------------------------- |
+| Oracle     | 1521  | `firewall-cmd --add-port=1521/tcp --permanent`  |
+| PostgreSQL | 5432  | `firewall-cmd --add-port=5432/tcp --permanent`  |
+| MySQL      | 3306  | `firewall-cmd --add-port=3306/tcp --permanent`  |
+| SQL Server | 1433  | `firewall-cmd --add-port=1433/tcp --permanent`  |
+| Tibero     | 8629  | `firewall-cmd --add-port=8629/tcp --permanent`  |
+| IBM DB2    | 50000 | `firewall-cmd --add-port=50000/tcp --permanent` |
+| SingleStore| 3306  | `firewall-cmd --add-port=3306/tcp --permanent`  |
 
-#### 연결 테스트
+#### Connection Test
 
 ```bash
-# 포트 연결 테스트
-nc -zv <호스트> <포트>
-# 또는
-telnet <호스트> <포트>
+# Port connection test
+nc -zv <host> <port>
+# Or
+telnet <host> <port>
 
-# 예시
+# Example
 nc -zv 192.168.0.100 1521
 ```
 
 ---
 
-### 5. 시스템 리소스 요구사항
+### 5. System Resource Requirements
 
-#### 최소 사양
+#### Minimum Specifications
 
-| 항목   | 최소         | 권장     |
-| ------ | ------------ | -------- |
-| CPU    | 2코어        | 4코어+   |
-| RAM    | 2GB          | 8GB+     |
-| 디스크 | 1GB (설치용) | SSD 권장 |
+| Item  | Minimum      | Recommended |
+| ----- | ------------ | ----------- |
+| CPU   | 2 cores      | 4 cores+    |
+| RAM   | 2GB          | 8GB+        |
+| Disk  | 1GB (install)| SSD recommended |
 
-#### JVM 메모리 설정
+#### JVM Memory Settings
 
-고부하 테스트 시 JVM 힙 메모리 조정이 필요합니다:
+JVM heap memory adjustment is required for high-load testing:
 
 ```bash
-# 기본 실행 (2GB 힙)
+# Default execution (2GB heap)
 java -Xms1g -Xmx2g -jar multi-db-load-tester-0.2.5.jar ...
 
-# 고부하 테스트 (4GB 힙, 500+ 스레드)
+# High-load testing (4GB heap, 500+ threads)
 java -Xms2g -Xmx4g -jar multi-db-load-tester-0.2.5.jar ...
 
-# 초고부하 테스트 (8GB 힙, 1000+ 스레드)
+# Ultra high-load testing (8GB heap, 1000+ threads)
 java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-0.2.5.jar ...
 ```
 
-#### 스레드 수에 따른 권장 리소스
+#### Recommended Resources by Thread Count
 
-| 스레드 수 | RAM  | JVM 힙 | 커넥션 풀 |
-| --------- | ---- | ------ | --------- |
-| ~100      | 4GB  | 2GB    | 100-150   |
-| ~200      | 8GB  | 4GB    | 200-250   |
-| ~500      | 16GB | 8GB    | 500-600   |
-| ~1000     | 32GB | 16GB   | 1000-1200 |
+| Thread Count | RAM  | JVM Heap | Connection Pool |
+| ------------ | ---- | -------- | --------------- |
+| ~100         | 4GB  | 2GB      | 100-150         |
+| ~200         | 8GB  | 4GB      | 200-250         |
+| ~500         | 16GB | 8GB      | 500-600         |
+| ~1000        | 32GB | 16GB     | 1000-1200       |
 
-#### 파일 디스크립터 제한 (Linux/macOS)
+#### File Descriptor Limits (Linux/macOS)
 
-고부하 테스트 시 파일 디스크립터 제한 증가가 필요할 수 있습니다:
+File descriptor limit increases may be needed for high-load testing:
 
 ```bash
-# 현재 제한 확인
+# Check current limit
 ulimit -n
 
-# 임시 증가
+# Temporary increase
 ulimit -n 65535
 
-# 영구 설정 (/etc/security/limits.conf)
+# Permanent setting (/etc/security/limits.conf)
 *    soft    nofile    65535
 *    hard    nofile    65535
 ```
 
 ---
 
-### 6. JDBC 드라이버 (자동 포함)
+### 6. JDBC Drivers (Included Automatically)
 
-모든 JDBC 드라이버가 `java/jre/` 디렉토리에 포함되어 있으며, 빌드 시 자동으로 JAR에 포함됩니다.
+All JDBC drivers are included in the `java/jre/` directory and automatically packaged into the JAR during build.
 
-#### 포함된 드라이버
+#### Included Drivers
 
-| 데이터베이스 | 드라이버 파일               | 위치                    |
-| ------------ | --------------------------- | ----------------------- |
-| Oracle       | ojdbc10.jar                 | `java/jre/oracle/`      |
-| PostgreSQL   | postgresql-42.2.9.jar       | `java/jre/postgresql/`  |
-| MySQL        | mysql-connector-j-9.5.0.jar | `java/jre/mysql/`       |
-| SQL Server   | mssql-jdbc-13.2.1.jre11.jar | `java/jre/sqlserver/`   |
-| Tibero       | tibero7-jdbc.jar            | `java/jre/tibero/`      |
-| IBM DB2      | jcc-12.1.3.0.jar            | `java/jre/db2/`         |
-| SingleStore  | singlestore-jdbc-1.2.1.jar  | `java/jre/singlestore/` |
+| Database   | Driver File                 | Location                |
+| ---------- | --------------------------- | ----------------------- |
+| Oracle     | ojdbc10.jar                 | `java/jre/oracle/`      |
+| PostgreSQL | postgresql-42.2.9.jar       | `java/jre/postgresql/`  |
+| MySQL      | mysql-connector-j-9.5.0.jar | `java/jre/mysql/`       |
+| SQL Server | mssql-jdbc-13.2.1.jre11.jar | `java/jre/sqlserver/`   |
+| Tibero     | tibero7-jdbc.jar            | `java/jre/tibero/`      |
+| IBM DB2    | jcc-12.1.3.0.jar            | `java/jre/db2/`         |
+| SingleStore| singlestore-jdbc-1.2.1.jar  | `java/jre/singlestore/` |
 
-#### 빌드 방법
+#### Build
 
 ```bash
 cd java
 ./build.sh
 ```
 
-빌드 스크립트가 자동으로:
+The build script automatically:
 
-1. 로컬 JDBC 드라이버를 Maven 로컬 저장소에 설치
-2. 모든 드라이버를 포함한 실행 가능한 JAR 생성
+1. Installs local JDBC drivers to the Maven local repository
+2. Creates an executable JAR containing all drivers
 
-> **Note**: 모든 JDBC 드라이버가 `java/jre/` 디렉토리에 포함되어 있습니다.
+> **Note**: All JDBC drivers are included in the `java/jre/` directory.
 
 ---
 
-## 빠른 시작
+## Quick Start
 
-### 1. 빌드
+### 1. Build
 
 ```bash
 cd java
 ./build.sh
 ```
 
-또는:
+Or:
 
 ```bash
 cd java
 mvn clean package -DskipTests
 ```
 
-### 2. 실행
+### 2. Run
 
 ```bash
-# 기본 실행 (--truncate로 깨끗한 상태에서 시작, warmup 30초 기본값)
+# Default execution (start clean with --truncate, default warmup 30 seconds)
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
@@ -398,7 +398,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --thread-count 100 \
     --test-duration 60
 
-# warmup 없이 실행
+# Run without warmup
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
@@ -409,9 +409,9 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --warmup 0
 ```
 
-> **Note**: `--truncate` 옵션은 테스트 전 테이블 데이터를 삭제하고 ID/시퀀스를 리셋합니다. `--warmup` 기본값은 30초입니다.
+> **Note**: The `--truncate` option deletes table data and resets IDs/sequences before testing. The default `--warmup` is 30 seconds.
 
-### 3. 도움말
+### 3. Help
 
 ```bash
 java -jar java/target/multi-db-load-tester-0.2.5.jar --help
@@ -419,28 +419,28 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar --help
 
 ---
 
-## 작업 모드 (--mode)
+## Operation Modes (--mode)
 
-| 모드          | 설명                                       | 사용 사례                |
-| ------------- | ------------------------------------------ | ------------------------ |
-| `full`        | INSERT → SELECT → UPDATE → DELETE (기본값) | 전체 CRUD 사이클 검증    |
-| `insert-only` | INSERT → COMMIT만                          | 최대 쓰기 처리량 측정    |
-| `select-only` | SELECT만                                   | 읽기 성능 측정           |
-| `update-only` | UPDATE → COMMIT                            | 업데이트 성능 측정       |
-| `delete-only` | DELETE → COMMIT                            | 삭제 성능 측정           |
-| `mixed`       | INSERT/UPDATE/DELETE 혼합 (60:20:15:5)     | 실제 워크로드 시뮬레이션 |
+| Mode          | Description                                | Use Case                    |
+| ------------- | ------------------------------------------ | --------------------------- |
+| `full`        | INSERT → SELECT → UPDATE → DELETE (default)| Full CRUD cycle validation  |
+| `insert-only` | INSERT → COMMIT only                       | Maximum write throughput    |
+| `select-only` | SELECT only                                | Read performance measurement|
+| `update-only` | UPDATE → COMMIT                            | Update performance measurement|
+| `delete-only` | DELETE → COMMIT                            | Delete performance measurement|
+| `mixed`       | INSERT/UPDATE/DELETE mixed (60:20:15:5)    | Realistic workload simulation|
 
-### ⚠️ 주의: update-only / delete-only / select-only 모드 사용 시
+### ⚠️ Caution: When using update-only / delete-only / select-only modes
 
-`update-only`, `delete-only`, `select-only` 모드는 **기존 데이터가 필요**합니다.
+`update-only`, `delete-only`, and `select-only` modes **require existing data**.
 
-v0.2부터 테이블이 이미 존재하면 **자동으로 재사용**됩니다 (DROP 없음).
-따라서 별도 옵션 없이 연속 실행이 가능합니다.
+Since v0.2, if tables already exist, they are **automatically reused** (no DROP).
+Therefore, consecutive runs are possible without additional options.
 
-#### 올바른 사용 예시
+#### Correct Usage Example
 
 ```bash
-# 1단계: insert-only로 데이터 삽입 (--truncate로 깨끗한 상태에서 시작)
+# Step 1: Insert data with insert-only (start clean with --truncate)
 java -jar target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
@@ -450,7 +450,7 @@ java -jar target/multi-db-load-tester-0.2.5.jar \
     --test-duration 60 \
     --warmup 10
 
-# 2단계: update-only 실행 (--truncate 없이 기존 데이터 유지)
+# Step 2: Run update-only (keep existing data without --truncate)
 java -jar target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
@@ -459,7 +459,7 @@ java -jar target/multi-db-load-tester-0.2.5.jar \
     --test-duration 60 \
     --warmup 10
 
-# 3단계: delete-only 실행 (--truncate 없이 기존 데이터 유지)
+# Step 3: Run delete-only (keep existing data without --truncate)
 java -jar target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
@@ -469,16 +469,16 @@ java -jar target/multi-db-load-tester-0.2.5.jar \
     --warmup 10
 ```
 
-> **Note**: 대부분의 테스트에서는 `--truncate` 옵션을 사용하여 일관된 초기 상태에서 시작하는 것을 권장합니다. update-only/delete-only/select-only 모드에서 기존 데이터가 필요한 경우에만 `--truncate`를 생략하세요.
+> **Note**: For most tests, it is recommended to use the `--truncate` option to start from a consistent initial state. Only omit `--truncate` when existing data is needed for update-only/delete-only/select-only modes.
 
 ---
 
-## 데이터베이스별 예제
+## Database-Specific Examples
 
 ### Oracle
 
 ```bash
-# SID 형식
+# SID format
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
@@ -488,7 +488,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --test-duration 300 \
     --warmup 30
 
-# Service Name 형식
+# Service Name format
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --service-name XEPDB1 \
@@ -525,7 +525,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --warmup 30
 ```
 
-> **Note**: MySQL의 커넥션 풀 크기는 기본적으로 32개로 제한됩니다.
+> **Note**: MySQL connection pool size is limited to 32 by default.
 
 ### SQL Server
 
@@ -543,7 +543,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### Tibero
 
 ```bash
-# SID 형식
+# SID format
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type tibero \
     --host 192.168.0.140 --port 8629 --sid tibero \
@@ -553,7 +553,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --test-duration 300 \
     --warmup 30
 
-# Service Name 형식
+# Service Name format
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type tibero \
     --host 192.168.0.140 --port 8629 --service-name tibero_svc \
@@ -590,18 +590,18 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --warmup 30
 ```
 
-> **Note**: SingleStore의 커넥션 풀 크기는 기본적으로 32개로 제한됩니다.
+> **Note**: SingleStore connection pool size is limited to 32 by default.
 
 ---
 
-## 고급 기능
+## Advanced Features
 
-### 직접 JDBC URL 사용 (--jdbc-url)
+### Direct JDBC URL Usage (--jdbc-url)
 
-복잡한 연결 문자열이나 RAC/SCAN 환경에서 직접 JDBC URL을 지정할 수 있습니다.
+You can specify a direct JDBC URL for complex connection strings or RAC/SCAN environments.
 
 ```bash
-# Oracle RAC/SCAN 환경
+# Oracle RAC/SCAN environment
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --jdbc-url "jdbc:oracle:thin:@//scan-ip:1521/SERVICE_NAME" \
@@ -610,7 +610,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --thread-count 100 \
     --test-duration 60
 
-# Oracle TNS 형식
+# Oracle TNS format
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --jdbc-url "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=host1)(PORT=1521))(ADDRESS=(PROTOCOL=TCP)(HOST=host2)(PORT=1521))(LOAD_BALANCE=yes)(CONNECT_DATA=(SERVICE_NAME=PROD)))" \
@@ -660,14 +660,14 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --thread-count 50
 ```
 
-> **Note**: `--jdbc-url` 옵션 사용 시 `--host`, `--port`, `--database`, `--sid`, `--service-name` 옵션은 무시됩니다.
+> **Note**: When using the `--jdbc-url` option, `--host`, `--port`, `--database`, `--sid`, and `--service-name` options are ignored.
 
 ---
 
-### 테이블 초기화 후 테스트 (--truncate)
+### Test After Table Initialization (--truncate)
 
 ```bash
-# 기존 데이터 삭제 후 깨끗한 상태에서 테스트 시작
+# Delete existing data and start test from clean state
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
@@ -677,9 +677,9 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --test-duration 60
 ```
 
-> **Note**: `--truncate` 옵션은 테이블의 모든 데이터를 삭제하고 ID/시퀀스를 1부터 다시 시작합니다.
+> **Note**: The `--truncate` option deletes all data from the table and restarts IDs/sequences from 1.
 
-### 워밍업 + Ramp-up + Rate Limiting
+### Warmup + Ramp-up + Rate Limiting
 
 ```bash
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
@@ -694,7 +694,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --test-duration 300
 ```
 
-### 배치 INSERT
+### Batch INSERT
 
 ```bash
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
@@ -707,10 +707,10 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --thread-count 50
 ```
 
-### 결과 내보내기
+### Result Export
 
 ```bash
-# JSON 형식
+# JSON format
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
@@ -719,7 +719,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --output-format json \
     --output-file results/test_result.json
 
-# CSV 형식
+# CSV format
 java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
@@ -731,138 +731,138 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 
 ---
 
-## 명령행 옵션
+## Command-Line Options
 
-### 필수 옵션
+### Required Options
 
-| 옵션         | 설명                                                                               |
-| ------------ | ---------------------------------------------------------------------------------- |
-| `--db-type`  | 데이터베이스 타입 (oracle, postgresql, mysql, sqlserver, tibero, db2, singlestore) |
-| `--host`     | 데이터베이스 호스트                                                                |
-| `--user`     | 사용자명                                                                          |
-| `--password` | 비밀번호                                                                           |
+| Option       | Description                                                                         |
+| ------------ | ----------------------------------------------------------------------------------- |
+| `--db-type`  | Database type (oracle, postgresql, mysql, sqlserver, tibero, db2, singlestore)      |
+| `--host`     | Database host                                                                       |
+| `--user`     | Username                                                                            |
+| `--password` | Password                                                                            |
 
-### 연결 옵션
+### Connection Options
 
-| 옵션             | 설명                                                |
-| ---------------- | --------------------------------------------------- |
-| `--port`         | 포트 번호                                           |
-| `--database`     | 데이터베이스명 (PostgreSQL, MySQL, SQL Server, DB2) |
-| `--sid`          | SID (Oracle, Tibero) - SID 형식 접속                |
-| `--service-name` | Service Name (Oracle, Tibero) - Service Name 형식 접속 |
-| `--jdbc-url`     | 직접 JDBC URL 지정 (host/port/database 등 무시)     |
+| Option             | Description                                                |
+| ------------------ | ---------------------------------------------------------- |
+| `--port`           | Port number                                                |
+| `--database`       | Database name (PostgreSQL, MySQL, SQL Server, DB2)         |
+| `--sid`            | SID (Oracle, Tibero) - SID format connection               |
+| `--service-name`   | Service Name (Oracle, Tibero) - Service Name format connection |
+| `--jdbc-url`       | Direct JDBC URL specification (ignores host/port/database, etc.) |
 
-### 테스트 옵션
+### Test Options
 
-| 옵션              | 기본값 | 설명                                                               |
-| ----------------- | ------ | ------------------------------------------------------------------ |
-| `--thread-count`  | 100    | 워커 스레드 수                                                     |
-| `--test-duration` | 300    | 테스트 시간 (초)                                                   |
-| `--mode`          | full   | 작업 모드                                                          |
-| `--truncate`      | false  | 테스트 전 테이블 TRUNCATE (데이터 삭제, 시퀀스/ID 리셋) - **권장** |
+| Option              | Default | Description                                                               |
+| ------------------- | ------- | ------------------------------------------------------------------------- |
+| `--thread-count`    | 100     | Number of worker threads                                                  |
+| `--test-duration`   | 300     | Test duration (seconds)                                                   |
+| `--mode`            | full    | Operation mode                                                            |
+| `--truncate`        | false   | TRUNCATE table before test (delete data, reset sequence/ID) - **Recommended** |
 
-> **권장**: 일관된 테스트 결과를 위해 `--truncate` 옵션을 항상 사용하는 것을 권장합니다.
+> **Recommended**: Always use the `--truncate` option for consistent test results.
 
-### 워밍업 및 부하 제어
+### Warmup and Load Control
 
-| 옵션           | 기본값 | 설명                                             |
-| -------------- | ------ | ------------------------------------------------ |
-| `--warmup`     | 30     | 워밍업 기간 (초), 0으로 설정 시 워밍업 없이 시작 |
-| `--ramp-up`    | 0      | 점진적 부하 증가 기간 (초)                       |
-| `--target-tps` | 0      | 목표 TPS 제한 (0=무제한)                         |
-| `--batch-size` | 1      | 배치 INSERT 크기                                 |
+| Option           | Default | Description                                             |
+| ---------------- | ------- | ------------------------------------------------------- |
+| `--warmup`       | 30      | Warmup period (seconds), set to 0 to start without warmup |
+| `--ramp-up`      | 0       | Gradual load increase period (seconds)                  |
+| `--target-tps`   | 0       | Target TPS limit (0=unlimited)                          |
+| `--batch-size`   | 1       | Batch INSERT size                                       |
 
-### HikariCP 풀 설정
+### HikariCP Pool Settings
 
-| 옵션                         | 기본값 | 설명                                  |
-| ---------------------------- | ------ | ------------------------------------- |
-| `--min-pool-size`            | 100    | 최소 풀 크기                          |
-| `--max-pool-size`            | 200    | 최대 풀 크기                          |
-| `--max-lifetime`             | 1800   | 커넥션 최대 수명 (초, 30분)           |
-| `--leak-detection-threshold` | 60     | Leak 감지 임계값 (초)                 |
-| `--idle-check-interval`      | 30     | 유휴 커넥션 검사 주기 (초)            |
-| `--idle-timeout`             | 30     | 유휴 커넥션 제거 시간 (초)            |
-| `--keepalive-time`           | 30     | 유휴 커넥션 검증 주기 (초, 최소 30초) |
+| Option                       | Default | Description                                  |
+| ---------------------------- | ------- | -------------------------------------------- |
+| `--min-pool-size`            | 100     | Minimum pool size                            |
+| `--max-pool-size`            | 200     | Maximum pool size                            |
+| `--max-lifetime`             | 1800    | Connection maximum lifetime (seconds, 30 min)|
+| `--leak-detection-threshold` | 60      | Leak detection threshold (seconds)           |
+| `--idle-check-interval`      | 30      | Idle connection check interval (seconds)     |
+| `--idle-timeout`             | 30      | Idle connection removal time (seconds)       |
+| `--keepalive-time`           | 30      | Idle connection validation interval (seconds, minimum 30 seconds) |
 
-> **Note**: HikariCP는 `keepalive-time`이 30초 미만이면 자동으로 비활성화합니다. 30초 이상으로 설정해야 합니다.
+> **Note**: HikariCP automatically disables `keepalive-time` if it is less than 30 seconds. It must be set to 30 seconds or more.
 
-#### idle-timeout 설정 영향도
+#### idle-timeout Setting Impact
 
-| 설정 방향 | 장점                                                               | 단점                                                             |
-| --------- | ------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| **증가**  | 커넥션 재사용률 증가, 커넥션 생성 비용 감소, 피크 타임 대응력 향상 | 메모리 사용량 증가, DB 세션 리소스 점유, 죽은 커넥션 잔류 가능성 |
-| **감소**  | 리소스 효율화, DB 세션 빠른 반환                                   | 커넥션 재생성 빈도 증가, 트래픽 변동 시 성능 저하                |
+| Direction | Advantages                                                               | Disadvantages                                                            |
+| --------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| **Increase** | Increased connection reuse, reduced connection creation cost, improved peak time response | Increased memory usage, DB session resource occupation, possibility of dead connections remaining |
+| **Decrease** | Resource efficiency, quick DB session return                             | Increased connection recreation frequency, performance degradation during traffic fluctuations |
 
-**환경별 권장값:**
+**Recommended values by environment:**
 
-| 환경                | idle-timeout | 이유                          |
-| ------------------- | ------------ | ----------------------------- |
-| 트래픽 변동 큰 환경 | 300~600초    | 피크 대비 커넥션 유지         |
-| 안정적 트래픽       | 60~120초     | 리소스 효율화                 |
-| DB 세션 제한 환경   | 30~60초      | DB 리소스 절약                |
-| 부하 테스트         | 600초+       | 커넥션 재생성 오버헤드 최소화 |
+| Environment                | idle-timeout | Reason                        |
+| -------------------------- | ------------ | ----------------------------- |
+| High traffic variation     | 300~600 sec  | Maintain connections for peaks |
+| Stable traffic             | 60~120 sec   | Resource efficiency           |
+| DB session limited environment | 30~60 sec | DB resource conservation      |
+| Load testing               | 600+ sec     | Minimize connection recreation overhead |
 
-> **Note**: `idle-timeout`은 `minPoolSize`를 초과하는 유휴 커넥션에만 적용됩니다.
+> **Note**: `idle-timeout` only applies to idle connections exceeding `minPoolSize`.
 
-#### keepalive-time 설정 영향도
+#### keepalive-time Setting Impact
 
-| 설정 방향 | 장점                                                     | 단점                                         |
-| --------- | -------------------------------------------------------- | -------------------------------------------- |
-| **증가**  | DB 부하 감소 (검증 쿼리 빈도 감소), 네트워크 트래픽 감소 | 죽은 커넥션 감지 지연, HA Failover 대응 지연 |
-| **감소**  | 빠른 장애 감지, HA 환경 빠른 복구                        | DB 부하 증가, 검증 쿼리 오버헤드             |
+| Direction | Advantages                                                     | Disadvantages                                         |
+| --------- | -------------------------------------------------------------- | ----------------------------------------------------- |
+| **Increase** | Reduced DB load (fewer validation queries), reduced network traffic | Delayed dead connection detection, HA failover response delay |
+| **Decrease** | Quick failure detection, quick recovery in HA environment      | Increased DB load, validation query overhead          |
 
-**환경별 권장값:**
+**Recommended values by environment:**
 
-| 환경             | keepalive-time              | 이유                |
-| ---------------- | --------------------------- | ------------------- |
-| HA/Failover 환경 | 30초 (기본값)               | 빠른 장애 감지 필요 |
-| 안정적인 단일 DB | 60~120초                    | DB 부하 감소        |
-| 방화벽 있는 환경 | 방화벽 타임아웃의 절반 이하 | 세션 끊김 방지      |
+| Environment          | keepalive-time              | Reason                |
+| -------------------- | --------------------------- | --------------------- |
+| HA/Failover environment | 30 sec (default)         | Quick failure detection needed |
+| Stable single DB     | 60~120 sec                  | Reduce DB load        |
+| Firewall environment | Half of firewall timeout or less | Prevent session disconnections |
 
-> **Note**: 현재 구현은 Worker 레벨에서 `Connection.isValid()` 검증을 수행하므로, `keepalive-time`을 늘려도 트랜잭션에서 죽은 커넥션을 사용할 위험은 낮습니다.
+> **Note**: Since the current implementation performs `Connection.isValid()` validation at the worker level, the risk of using dead connections in transactions is low even if `keepalive-time` is increased.
 
-#### 설정 간 권장 관계
+#### Recommended Relationship Between Settings
 
 ```
-idle-timeout > keepalive-time (권장)
+idle-timeout > keepalive-time (recommended)
 ```
 
-| 설정             | 역할                  | 권장값                    |
-| ---------------- | --------------------- | ------------------------- |
-| `keepalive-time` | 유휴 커넥션 검증 주기 | 30초                      |
-| `idle-timeout`   | 유휴 커넥션 제거 시간 | keepalive-time × 2~3 이상 |
-| `max-lifetime`   | 커넥션 최대 수명      | 1800초 (30분)             |
+| Setting          | Role                          | Recommended Value         |
+| ---------------- | ----------------------------- | ------------------------- |
+| `keepalive-time` | Idle connection validation interval | 30 sec              |
+| `idle-timeout`   | Idle connection removal time  | keepalive-time × 2~3 or more |
+| `max-lifetime`   | Connection maximum lifetime   | 1800 sec (30 min)         |
 
-### 결과 출력
+### Result Output
 
-| 옵션                    | 기본값 | 설명                        |
-| ----------------------- | ------ | --------------------------- |
-| `--output-format`       | none   | 결과 형식 (csv, json)       |
-| `--output-file`         | -      | 결과 파일 경로              |
-| `--monitor-interval`    | 1.0    | 모니터 출력 간격 (초)       |
-| `--sub-second-interval` | 100    | Sub-second 측정 윈도우 (ms) |
+| Option                    | Default | Description                        |
+| ----------------------- | ------- | ---------------------------------- |
+| `--output-format`       | none    | Result format (csv, json)          |
+| `--output-file`         | -       | Result file path                   |
+| `--monitor-interval`    | 1.0     | Monitor output interval (seconds)  |
+| `--sub-second-interval` | 100     | Sub-second measurement window (ms) |
 
-### 기타
+### Other
 
-| 옵션            | 설명                      |
-| --------------- | ------------------------- |
-| `--print-ddl`   | DDL 스크립트 출력 후 종료 |
-| `-h, --help`    | 도움말 출력               |
-| `-v, --version` | 버전 출력                 |
+| Option            | Description                      |
+| ----------------- | -------------------------------- |
+| `--print-ddl`     | Print DDL script and exit        |
+| `-h, --help`      | Print help                       |
+| `-v, --version`   | Print version                    |
 
 ---
 
-## 실행 스크립트
+## Execution Scripts
 
-각 데이터베이스별 실행 스크립트가 제공됩니다:
+Database-specific execution scripts are provided:
 
 ```bash
 cd java
 
-# 권한 부여
+# Grant permissions
 chmod +x *.sh
 
-# 실행
+# Run
 ./run_oracle_test.sh
 ./run_postgresql_test.sh
 ./run_mysql_test.sh
@@ -871,7 +871,7 @@ chmod +x *.sh
 ./run_db2_test.sh
 ```
 
-환경 변수로 설정 가능:
+Configurable via environment variables:
 
 ```bash
 export ORACLE_HOST=192.168.0.100
@@ -887,22 +887,22 @@ export TEST_DURATION=300
 
 ---
 
-## 모니터링 출력 예시
+## Monitoring Output Example
 
-### 테스트 시작 시 (스키마 설정)
+### Test Start (Schema Setup)
 
 ```
-# 첫 실행 - 스키마 생성
+# First run - schema creation
 Setting up database schema...
 Tibero schema created successfully
 
-# 재실행 - 기존 스키마 재사용
+# Re-run - reuse existing schema
 Setting up database schema...
 Tibero schema already exists - reusing existing schema
   (DROP objects manually to recreate, or use --truncate to clear data only)
 ```
 
-### Warmup 기간 중
+### During Warmup Period
 
 ```
 ================================================================================
@@ -912,7 +912,7 @@ Total test duration: 30 seconds (warmup) + 120 seconds (measurement) = 150 secon
 [Monitor] [WARMUP]  TXN: 1,234 | INS: 1,234 | SEL: 1,234 | UPD: 1,234 | DEL: 1,234 | ERR: 0 | Avg TPS: - | RT TPS: 1234.00 | Lat(p50/p95/p99): 1.2/2.1/3.5ms | Pool: 95/100
 ```
 
-### Warmup 종료 후 (측정 기간)
+### After Warmup (Measurement Period)
 
 ```
 ================================================================================
@@ -921,7 +921,7 @@ Total test duration: 30 seconds (warmup) + 120 seconds (measurement) = 150 secon
 [Monitor] [RUNNING] TXN: 1,523 | INS: 1,523 | SEL: 1,523 | UPD: 1,523 | DEL: 1,523 | ERR: 0 | Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p50/p95/p99): 2.3/4.5/8.2ms | Pool: 95/100
 ```
 
-### Warmup 없이 실행 (--warmup 0)
+### Without Warmup (--warmup 0)
 
 ```
 ================================================================================
@@ -930,146 +930,146 @@ No warmup period. Test duration: 60 seconds
 [Monitor] [RUNNING] TXN: 1,523 | INS: 1,523 | SEL: 1,523 | UPD: 1,523 | DEL: 1,523 | ERR: 0 | Avg TPS: 1507.67 | RT TPS: 1523.00 | Lat(p50/p95/p99): 2.3/4.5/8.2ms | Pool: 95/100
 ```
 
-### 출력 항목 설명
+### Output Item Description
 
-| 항목                  | 설명                                                       |
-| --------------------- | ---------------------------------------------------------- |
-| `[WARMUP]`            | 워밍업 기간 중 표시                                        |
-| `[RUNNING]`           | 측정 기간 중 표시 (워밍업 종료 후 또는 워밍업 없는 경우)   |
-| `TXN/INS/SEL/UPD/DEL` | 해당 구간(interval) 동안의 변화량 (delta)                  |
-| `ERR`                 | 해당 구간 동안의 에러 수                                   |
-| `Avg TPS`             | 평균 TPS (Warmup 있으면 Post-Warmup TPS, 없으면 전체 평균) |
-| `RT TPS`              | 실시간 TPS (최근 1초간 트랜잭션 수)                        |
-| `Lat(p50/p95/p99)`    | 응답시간 백분위수 (밀리초)                                 |
-| `Pool`                | 커넥션 풀 상태 (활성/전체)                                 |
+| Item                  | Description                                                       |
+| --------------------- | ----------------------------------------------------------------- |
+| `[WARMUP]`            | Displayed during warmup period                                    |
+| `[RUNNING]`           | Displayed during measurement period (after warmup or without warmup) |
+| `TXN/INS/SEL/UPD/DEL` | Change amount (delta) during the interval                         |
+| `ERR`                 | Number of errors during the interval                              |
+| `Avg TPS`             | Average TPS (Post-Warmup TPS if warmup exists, overall average otherwise) |
+| `RT TPS`              | Real-time TPS (transactions in the last 1 second)                 |
+| `Lat(p50/p95/p99)`    | Response time percentiles (milliseconds)                          |
+| `Pool`                | Connection pool status (active/total)                             |
 
-> **Note**: `--mode full` 사용 시 INSERT, SELECT, UPDATE, DELETE가 모두 수행됩니다.
+> **Note**: When using `--mode full`, INSERT, SELECT, UPDATE, and DELETE are all performed.
 
 ---
 
-## 문제 해결
+## Troubleshooting
 
-### HikariCP 커넥션 풀 오류
+### HikariCP Connection Pool Errors
 
-- `--max-pool-size` 값이 데이터베이스 `max_connections` 설정보다 작은지 확인
-- 네트워크 연결 및 방화벽 설정 확인
+- Ensure `--max-pool-size` is smaller than the database `max_connections` setting
+- Check network connection and firewall settings
 
-### DB 재시작 후 커넥션 복구
+### DB Restart Recovery
 
-**v0.2에서 개선된 사항:**
+**Improvements in v0.2:**
 
-- 워커가 커넥션 사용 전 `Connection.isValid()` 메서드로 유효성 검증
-- 유효하지 않은 커넥션 감지 시 즉시 새 커넥션 획득 (최대 3회 재시도)
-- 연속 에러 발생 시 빠른 커넥션 재생성 (임계값: 2회, 대기: 100ms)
+- Workers validate with `Connection.isValid()` before using connections
+- When invalid connections are detected, immediately acquire new connections (up to 3 retries)
+- Fast connection recreation on consecutive errors (threshold: 2 times, wait: 100ms)
 
-**HikariCP keepaliveTime 제한:**
+**HikariCP keepaliveTime Limitation:**
 
-- HikariCP는 `keepalive-time`이 **30초 미만이면 비활성화**합니다
-- 30초 미만으로 설정하면 경고 메시지와 함께 무시됨:
+- HikariCP **disables** `keepalive-time` if it is **less than 30 seconds**
+- If set below 30 seconds, a warning message is displayed and it is ignored:
   ```
   HikariPool-TIBERO - keepaliveTime is less than 30000ms, disabling it.
   ```
-- 유휴 커넥션 검증이 필요하면 30초 이상으로 설정하세요
+- Set to 30 seconds or more if idle connection validation is needed
 
-**동작 원리:**
+**How it works:**
 
-1. 워커가 매 트랜잭션 전 `connection.isValid(2)` 호출 (2초 타임아웃)
-2. 유효하지 않으면 커넥션 해제 후 새 커넥션 획득
-3. 새 커넥션도 유효성 검증 후 사용 (최대 3회 재시도)
-4. DB 재시작 후 빠르게 새 커넥션으로 전환
+1. Worker calls `connection.isValid(2)` before each transaction (2-second timeout)
+2. If invalid, release connection and acquire new connection
+3. Validate new connection before use (up to 3 retries)
+4. Quickly switch to new connections after DB restart
 
-### Leak Detection 경고
+### Leak Detection Warning
 
-- 트랜잭션 처리 시간이 `--leak-detection-threshold`를 초과하는 경우
-- 장시간 트랜잭션이 예상되는 경우 임계값 증가
+- Occurs when transaction processing time exceeds `--leak-detection-threshold`
+- Increase threshold if long-running transactions are expected
 
-### MySQL 풀 크기 제한
+### MySQL Pool Size Limit
 
-- MySQL은 기본적으로 최대 32개 커넥션으로 제한됨
-- MySQL 서버의 `max_connections` 설정도 함께 조정 필요
+- MySQL is limited to a maximum of 32 connections by default
+- MySQL server `max_connections` setting also needs to be adjusted
 
 ### OutOfMemoryError
 
-- JVM 힙 크기 증가: `-Xmx4g`
-- 스레드 수 감소
+- Increase JVM heap size: `-Xmx4g`
+- Decrease thread count
 
 ---
 
-## 프로젝트 구조
+## Project Structure
 
 ```
 .
-├── README.md                          # 이 파일
-└── java/                              # Java 소스
-    ├── pom.xml                        # Maven 빌드 설정
-    ├── build.sh                       # 빌드 스크립트
-    ├── run_*_test.sh                  # 실행 스크립트
+├── README.md                          # This file
+└── java/                              # Java source
+    ├── pom.xml                        # Maven build configuration
+    ├── build.sh                       # Build script
+    ├── run_*_test.sh                  # Execution scripts
     └── src/main/java/com/loadtest/
-        ├── MultiDBLoadTester.java     # 메인 클래스
-        ├── DatabaseAdapter.java       # DB 어댑터 인터페이스
-        ├── AbstractDatabaseAdapter.java # HikariCP 기반 추상 클래스
-        ├── OracleAdapter.java         # Oracle 어댑터
-        ├── PostgreSQLAdapter.java     # PostgreSQL 어댑터
-        ├── MySQLAdapter.java          # MySQL 어댑터
-        ├── SQLServerAdapter.java      # SQL Server 어댑터
-        ├── TiberoAdapter.java         # Tibero 어댑터
-        ├── DB2Adapter.java            # IBM DB2 어댑터
-        ├── SingleStoreAdapter.java    # SingleStore 어댑터
-        ├── LoadTestWorker.java        # 부하 테스트 워커
-        ├── MonitorThread.java         # 모니터링 스레드
-        ├── PerformanceCounter.java    # 성능 카운터
+        ├── MultiDBLoadTester.java     # Main class
+        ├── DatabaseAdapter.java       # DB adapter interface
+        ├── AbstractDatabaseAdapter.java # HikariCP-based abstract class
+        ├── OracleAdapter.java         # Oracle adapter
+        ├── PostgreSQLAdapter.java     # PostgreSQL adapter
+        ├── MySQLAdapter.java          # MySQL adapter
+        ├── SQLServerAdapter.java      # SQL Server adapter
+        ├── TiberoAdapter.java         # Tibero adapter
+        ├── DB2Adapter.java            # IBM DB2 adapter
+        ├── SingleStoreAdapter.java    # SingleStore adapter
+        ├── LoadTestWorker.java        # Load test worker
+        ├── MonitorThread.java         # Monitoring thread
+        ├── PerformanceCounter.java    # Performance counter
         ├── RateLimiter.java           # Rate Limiter
-        ├── ResultExporter.java        # 결과 내보내기
-        ├── DatabaseConfig.java        # DB 설정
-        └── WorkMode.java              # 작업 모드
+        ├── ResultExporter.java        # Result exporter
+        ├── DatabaseConfig.java        # DB configuration
+        └── WorkMode.java              # Work mode
 ```
 
 ---
 
-## 버전 히스토리
+## Version History
 
 ### v0.2.5 (2025-02-20)
 
-**Tibero 6 JDBC 드라이버 Auto-Fallback**
+**Tibero 6 JDBC Driver Auto-Fallback**
 
-- Tibero 6 서버 연결 시 `JDBC-12030` 에러 자동 감지 후 내장 Tibero 6 드라이버로 자동 전환
-- `tibero6-jdbc.jar`를 fat JAR 내 리소스로 임베드 (클래스가 아닌 JAR 파일 그대로)
-- `--driver-path` 없이도 Tibero 6/7 서버 모두 자동 연결 가능
-- 기존 `--driver-path` 옵션은 그대로 유지 (명시적 외부 드라이버 우선)
-- HikariCP `DriverDataSource` classloader 충돌 우회: `SimpleDriverDataSource` 래퍼로 child-first classloader에서 로드한 드라이버를 직접 사용
-- Tibero 6이 지원하지 않는 service name URL(`@//host:port/service`)을 SID 형식(`@host:port:sid`)으로 자동 변환
-- 다른 DB(Oracle, PostgreSQL, MySQL 등)에는 영향 없음
-- 검증 완료: Tibero 6 서버 대상 355 TPS, 0 에러 확인
+- Automatic detection of `JDBC-12030` error when connecting to Tibero 6 server, with automatic fallback to built-in Tibero 6 driver
+- Embed `tibero6-jdbc.jar` as a resource in the fat JAR (as a JAR file, not a class)
+- Automatic connection to both Tibero 6/7 servers without `--driver-path`
+- Existing `--driver-path` option remains unchanged (explicit external driver takes priority)
+- HikariCP `DriverDataSource` classloader conflict workaround: `SimpleDriverDataSource` wrapper to use drivers loaded from child-first classloader directly
+- Automatic conversion of service name URL (`@//host:port/service`) not supported by Tibero 6 to SID format (`@host:port:sid`)
+- No impact on other DBs (Oracle, PostgreSQL, MySQL, etc.)
+- Verified: 355 TPS, 0 errors against Tibero 6 server
 
 ### v0.2.4 (2025-01-06)
 
-**Oracle/Tibero Service Name 접속 지원**
+**Oracle/Tibero Service Name Connection Support**
 
-- `--service-name` 옵션 추가: Oracle, Tibero 데이터베이스에 Service Name 형식으로 접속 지원
-- 기존 `--sid` 옵션과 별도로 사용 가능
-- JDBC URL 형식:
-  - `--sid` 사용 시: `jdbc:oracle:thin:@host:port:SID`
-  - `--service-name` 사용 시: `jdbc:oracle:thin:@//host:port/SERVICE_NAME`
-- Tibero도 동일한 형식 지원
+- Added `--service-name` option: Service Name format connection support for Oracle, Tibero databases
+- Can be used separately from existing `--sid` option
+- JDBC URL formats:
+  - With `--sid`: `jdbc:oracle:thin:@host:port:SID`
+  - With `--service-name`: `jdbc:oracle:thin:@//host:port/SERVICE_NAME`
+- Tibero supports the same formats
 
-**직접 JDBC URL 지정 지원**
+**Direct JDBC URL Specification Support**
 
-- `--jdbc-url` 옵션 추가: 모든 데이터베이스에 대해 직접 JDBC URL 지정 가능
-- RAC/SCAN, TNS, SSL 등 복잡한 연결 문자열 지원
-- `--jdbc-url` 사용 시 `--host`, `--port`, `--database`, `--sid`, `--service-name` 무시
-- 지원 데이터베이스: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore
+- Added `--jdbc-url` option: Direct JDBC URL specification for all databases
+- Supports complex connection strings such as RAC/SCAN, TNS, SSL
+- `--host`, `--port`, `--database`, `--sid`, `--service-name` are ignored when using `--jdbc-url`
+- Supported databases: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore
 
-**사용 예시:**
+**Usage Examples:**
 ```bash
-# SID 형식 (기존 방식)
+# SID format (existing method)
 java -jar multi-db-load-tester-0.2.5.jar --db-type oracle --host localhost \
     --port 1521 --sid ORCL --user test --password pass
 
-# Service Name 형식
+# Service Name format
 java -jar multi-db-load-tester-0.2.5.jar --db-type oracle --host localhost \
     --port 1521 --service-name XEPDB1 --user test --password pass
 
-# 직접 JDBC URL 지정 (RAC/SCAN 환경)
+# Direct JDBC URL specification (RAC/SCAN environment)
 java -jar multi-db-load-tester-0.2.5.jar --db-type oracle \
     --jdbc-url "jdbc:oracle:thin:@//scan-ip:1521/SERVICE" \
     --user test --password pass
@@ -1077,92 +1077,92 @@ java -jar multi-db-load-tester-0.2.5.jar --db-type oracle \
 
 ### v0.2.3 (2025-12-29)
 
-**SingleStore 데이터베이스 지원 추가**
+**SingleStore Database Support Added**
 
-- SingleStore JDBC 드라이버 (1.2.1) 통합
-- `SingleStoreAdapter.java` 추가 (MySQL 호환 프로토콜 기반)
-- 커넥션 풀 크기 기본 제한: 32개
-- `run_singlestore_test.sh` 실행 스크립트 추가
-- 지원 데이터베이스 6개 → 7개로 확장
+- Integrated SingleStore JDBC driver (1.2.1)
+- Added `SingleStoreAdapter.java` (based on MySQL-compatible protocol)
+- Default connection pool size limit: 32
+- Added `run_singlestore_test.sh` execution script
+- Expanded supported databases from 6 to 7
 
 ### v0.2.2 (2025-12-19)
 
-**결과 통계 출력 기준 개선**
+**Improved Result Statistics Output**
 
-- `Results`의 `Average TPS`를 **Warmup 제외(Post-Warmup)** 기준으로 출력
-- `Latency` 통계를 **Warmup 제외** 기준으로 집계/출력
+- `Results` `Average TPS` output based on **excluding Warmup (Post-Warmup)**
+- `Latency` statistics aggregated/output based on **excluding Warmup**
 
 ### v0.2 (2025-12-15)
 
-**테이블 TRUNCATE 옵션 추가**
+**Table TRUNCATE Option Added**
 
-- `--truncate`: 테스트 전 테이블 데이터 삭제 및 ID/시퀀스 리셋
-  - Oracle, Tibero, DB2: 시퀀스 DROP/CREATE로 1부터 재시작
+- `--truncate`: Delete table data and reset ID/sequence before testing
+  - Oracle, Tibero, DB2: Sequence DROP/CREATE to restart from 1
   - PostgreSQL: `TRUNCATE ... RESTART IDENTITY`
-  - MySQL: AUTO_INCREMENT 자동 리셋
-  - SQL Server: IDENTITY 자동 리셋
+  - MySQL: AUTO_INCREMENT auto reset
+  - SQL Server: IDENTITY auto reset
 
-**HikariCP 커넥션 관리 개선**
+**HikariCP Connection Management Improvements**
 
-- 유휴 커넥션 관리 옵션 추가:
-  - `--idle-timeout`: 유휴 커넥션 제거 시간 (기본값: 30초)
-  - `--keepalive-time`: 유휴 커넥션 검증 주기 (기본값: 30초, 최소 30초)
-- 시작 시 설정값 출력에 Idle Timeout, Keepalive Time 표시
+- Added idle connection management options:
+  - `--idle-timeout`: Idle connection removal time (default: 30 seconds)
+  - `--keepalive-time`: Idle connection validation interval (default: 30 seconds, minimum 30 seconds)
+- Display Idle Timeout, Keepalive Time in startup settings output
 
-**DB 재시작 복구 개선**
+**DB Restart Recovery Improvements**
 
-- 워커가 커넥션 사용 전 `Connection.isValid()` 로 유효성 검증
-- 유효하지 않은 커넥션 감지 시 즉시 새 커넥션 획득 (최대 3회 재시도)
-- 연속 에러 임계값 감소 (5회 → 2회) 및 대기 시간 단축 (500ms → 100ms)
-- DB 재시작 후 빠른 자동 복구 지원
+- Workers validate with `Connection.isValid()` before using connections
+- When invalid connections are detected, immediately acquire new connections (up to 3 retries)
+- Decreased consecutive error threshold (5 → 2) and reduced wait time (500ms → 100ms)
+- Supports quick automatic recovery after DB restart
 
-**모니터링 출력 개선**
+**Monitoring Output Improvements**
 
-- 모니터링 출력이 누적 값에서 **구간별 변화량(delta)**으로 변경
-  - TXN, INS, SEL, UPD, DEL, ERR: 이전 interval 대비 변화량 표시
-- 상태 표시 추가:
-  - `[WARMUP]`: 워밍업 기간 중
-  - `[RUNNING]`: 측정 기간 중 (워밍업 종료 후)
-- Warmup 기간 정보 로깅 개선:
-  - 시작 시: 워밍업 기간 및 총 테스트 시간 출력
-  - 종료 시: `*** WARMUP COMPLETED ***` 메시지 출력
-- Avg TPS가 **Warmup 기간을 제외**하고 계산
-  - Warmup 중: `Avg TPS: -` 표시
-  - Warmup 후: Post-Warmup TPS 표시
-  - Warmup 없음: 전체 평균 TPS 표시
+- Monitoring output changed from cumulative values to **interval-based delta (change amount)**
+  - TXN, INS, SEL, UPD, DEL, ERR: Display change amount compared to previous interval
+- Added status indicators:
+  - `[WARMUP]`: During warmup period
+  - `[RUNNING]`: During measurement period (after warmup)
+- Improved warmup period information logging:
+  - At start: Output warmup period and total test duration
+  - At end: Output `*** WARMUP COMPLETED ***` message
+- Avg TPS calculated **excluding warmup period**
+  - During warmup: Display `Avg TPS: -`
+  - After warmup: Display Post-Warmup TPS
+  - Without warmup: Display overall average TPS
 
-**기본값 변경**
+**Default Value Changes**
 
-- `--warmup` 기본값: `0` → `30` (30초 워밍업)
+- `--warmup` default: `0` → `30` (30-second warmup)
 
-**스키마 관리 개선**
+**Schema Management Improvements**
 
-- 테이블/시퀀스가 이미 존재할 경우 **삭제하지 않고 재사용**
-- 기존 스키마 감지 시 메시지 출력:
+- **Reuse without deletion** when tables/sequences already exist
+- Message output when existing schema detected:
   ```
   Tibero schema already exists - reusing existing schema
     (DROP objects manually to recreate, or use --truncate to clear data only)
   ```
-- 모든 DB 어댑터 적용: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, DB2
+- Applied to all DB adapters: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, DB2
 
-**버그 수정**
+**Bug Fixes**
 
-- `--warmup 0` 사용 시 Avg TPS가 정상 출력되도록 수정
+- Fixed Avg TPS to display normally when using `--warmup 0`
 
 ### v0.1 (2025-12-14)
 
-**초기 릴리스**
+**Initial Release**
 
-- 6개 데이터베이스 지원: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2
-- HikariCP 기반 고성능 커넥션 풀링
-- 6가지 작업 모드: full, insert-only, select-only, update-only, delete-only, mixed
-- 워밍업, Ramp-up, Rate Limiting 기능
-- 배치 INSERT 지원
-- CSV/JSON 결과 내보내기
-- 실시간 모니터링 (TPS, 레이턴시 P50/P95/P99)
+- 6 database support: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2
+- HikariCP-based high-performance connection pooling
+- 6 operation modes: full, insert-only, select-only, update-only, delete-only, mixed
+- Warmup, Ramp-up, Rate Limiting features
+- Batch INSERT support
+- CSV/JSON result export
+- Real-time monitoring (TPS, latency P50/P95/P99)
 
 ---
 
-## 라이선스
+## License
 
 MIT License
