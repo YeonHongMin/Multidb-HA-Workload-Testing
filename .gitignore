@@ -1,6 +1,14 @@
 # Build output
 java/target/
 
+# JDBC drivers — proprietary / not redistributable on a public repo.
+# Keep these locally for build.sh, but never commit them.
+# (PostgreSQL, SQLite, SQL Server, SingleStore drivers remain tracked.)
+java/jre/oracle/
+java/jre/db2/
+java/jre/tibero/
+java/jre/mysql/
+
 # Log files
 *.log
 java/logs/*
