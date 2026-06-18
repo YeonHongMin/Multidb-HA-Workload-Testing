@@ -1028,6 +1028,17 @@ No warmup period. Test duration: 60 seconds
 
 ## Version History
 
+### v0.2.6 (2026-06-18)
+
+**HikariCP Connection Leak Fix**
+
+- Refactored `LoadTestWorker` to borrow and release a pooled connection per transaction, instead of holding a single connection for the worker's entire lifetime
+- Eliminates HikariCP "Apparent connection leak detected" warnings under normal operation
+- The connection is released on every path (success, failure, no-data, and exception), so it never exceeds `--leak-detection-threshold`
+- DB-agnostic change in the worker loop, so it applies equally to all 7 databases (Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore)
+- Verified against SQL Server: 16,308 transactions, 0 errors, 0 leak warnings
+
+
 ### v0.2.5 (2025-02-20)
 
 **Tibero 6 JDBC Driver Auto-Fallback**

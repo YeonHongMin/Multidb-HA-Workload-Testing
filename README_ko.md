@@ -1028,6 +1028,17 @@ No warmup period. Test duration: 60 seconds
 
 ## 버전 히스토리
 
+### v0.2.6 (2026-06-18)
+
+**HikariCP 커넥션 누수 경고 수정**
+
+- `LoadTestWorker`가 워커 수명 내내 커넥션 1개를 점유하던 방식을, 트랜잭션마다 커넥션을 획득·반납하도록 리팩터링
+- 정상 동작 시 HikariCP "Apparent connection leak detected" 경고가 더 이상 발생하지 않음
+- 성공/실패/데이터 없음/예외 등 모든 경로에서 커넥션을 반납하므로 `--leak-detection-threshold`를 초과하지 않음
+- 워커 루프의 DB 비종속 변경이라 7개 DB(Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore) 모두에 동일하게 적용
+- SQL Server 대상 검증: 16,308 트랜잭션, 0 에러, 누수 경고 0건
+
+
 ### v0.2.5 (2025-02-20)
 
 **Tibero 6 JDBC 드라이버 Auto-Fallback**

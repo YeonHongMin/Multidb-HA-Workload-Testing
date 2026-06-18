@@ -164,11 +164,11 @@ Multidb-HA-Workload-Testing/
 ```
 LoadTestWorker.call()
 │
-├── 초기화: 풀에서 커넥션 획득
-│
 └── While (타임아웃 아님 && 종료 아님):
     │
     ├── 속도 제한: rateLimiter.acquire()
+    │
+    ├── 커넥션 획득: 트랜잭션마다 풀에서 획득 (getValidConnection)
     │
     ├── 트랜잭션 실행 (WorkMode 기반):
     │   ├── FULL: INSERT → SELECT → UPDATE → DELETE
@@ -180,8 +180,10 @@ LoadTestWorker.call()
     │
     ├── 메트릭 기록: 레이턴시, TPS
     │
+    ├── 커넥션 반납: 트랜잭션마다 풀로 반납 (성공/실패/예외 모든 경로)
+    │
     └── 오류 처리:
-        └── 5회 연속 오류 → 재연결
+        └── 2회 연속 오류 → 지수 백오프
 ```
 
 ## 모니터링 출력
