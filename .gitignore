@@ -1,3 +1,6 @@
+# Build output
+java/target/
+
 # Log files
 *.log
 java/logs/*

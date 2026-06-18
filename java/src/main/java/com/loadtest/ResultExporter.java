@@ -76,7 +76,7 @@ public class ResultExporter {
 
         Map<String, Object> testInfo = new LinkedHashMap<>();
         testInfo.put("timestamp", Instant.now().toString());
-        testInfo.put("version", "0.2.5");
+        testInfo.put("version", "0.2.6");
         result.put("testInfo", testInfo);
 
         result.put("configuration", config);

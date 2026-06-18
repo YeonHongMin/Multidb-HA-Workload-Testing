@@ -284,7 +284,6 @@ public class LoadTestWorker implements Callable<Integer> {
         Thread.currentThread().setName(threadName);
         logger.info("[{}] Starting (mode: {})", threadName, mode.getValue());
 
-        Connection connection = null;
         int consecutiveErrors = 0;
         long maxId = maxIdCache;
 
@@ -299,27 +298,11 @@ public class LoadTestWorker implements Callable<Integer> {
                 continue;
             }
 
+            Connection connection = null;
             try {
-                // 커넥션 획득 및 유효성 검증
-                if (connection == null) {
-                    connection = getValidConnection();
-                    consecutiveErrors = 0;
-                } else {
-                    // 기존 커넥션 유효성 검증 (DB 재시작 대응)
-                    try {
-                        if (!connection.isValid(2)) {
-                            logger.debug("[{}] Connection invalid, getting new one", threadName);
-                            dbAdapter.releaseConnection(connection, true);
-                            connection = getValidConnection();
-                            perfCounter.incrementConnectionRecreate();
-                        }
-                    } catch (SQLException e) {
-                        logger.debug("[{}] Connection validation failed: {}", threadName, e.getMessage());
-                        dbAdapter.releaseConnection(connection, true);
-                        connection = getValidConnection();
-                        perfCounter.incrementConnectionRecreate();
-                    }
-                }
+                // 매 트랜잭션마다 새 커넥션 획득 및 유효성 검증
+                // (워커가 커넥션을 장기간 점유하면 HikariCP의 Apparent connection leak 경고가 발생)
+                connection = getValidConnection();
 
                 // For modes that need existing data, check maxId (매 100회마다 갱신)
                 boolean needsData = (mode == WorkMode.SELECT_ONLY || mode == WorkMode.UPDATE_ONLY ||
@@ -327,6 +310,8 @@ public class LoadTestWorker implements Callable<Integer> {
                 if (needsData && (maxId == 0 || transactionCount % 100 == 0)) {
                     maxId = dbAdapter.getMaxId(connection);
                     if (maxId == 0) {
+                        dbAdapter.releaseConnection(connection, false);
+                        connection = null;
                         Thread.sleep(1000);
                         continue;
                     }
@@ -344,18 +329,19 @@ public class LoadTestWorker implements Callable<Integer> {
 
                 if (!success) {
                     consecutiveErrors++;
-                    // 연속 에러 시 커넥션 재생성 (임계값 감소: 5 → 2)
+                    dbAdapter.releaseConnection(connection, true);
+                    connection = null;
+                    // 연속 에러 시 지수 백오프 적용
                     if (consecutiveErrors >= 2) {
-                        dbAdapter.releaseConnection(connection, true);
-                        connection = null;
-                        perfCounter.incrementConnectionRecreate();
-                        // 지수 백오프 적용
                         Thread.sleep(currentBackoffMs);
                         currentBackoffMs = Math.min(currentBackoffMs * 2, MAX_BACKOFF_MS);
+                        consecutiveErrors = 0;
                     }
                 } else {
                     consecutiveErrors = 0;
                     resetBackoff();  // 성공 시 백오프 리셋
+                    dbAdapter.releaseConnection(connection, false);
+                    connection = null;
                 }
 
             } catch (Exception e) {
@@ -370,15 +356,12 @@ public class LoadTestWorker implements Callable<Integer> {
                     // 지수 백오프 적용
                     Thread.sleep(currentBackoffMs);
                     currentBackoffMs = Math.min(currentBackoffMs * 2, MAX_BACKOFF_MS);
+                    consecutiveErrors = 0;
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     break;
                 }
             }
-        }
-
-        if (connection != null) {
-            dbAdapter.releaseConnection(connection, false);
         }
 
         logger.info("[{}] Completed. Transactions: {}", threadName, transactionCount);

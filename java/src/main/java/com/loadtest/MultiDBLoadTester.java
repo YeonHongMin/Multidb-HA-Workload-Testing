@@ -14,13 +14,13 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Multi-Database Load Tester v0.2.5 (HikariCP Version)
+ * Multi-Database Load Tester v0.2.6 (HikariCP Version)
  *
  * 지원 데이터베이스: Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, SingleStore
  */
 public class MultiDBLoadTester {
     private static final Logger logger = LoggerFactory.getLogger(MultiDBLoadTester.class);
-    private static final String VERSION = "0.2.5";
+    private static final String VERSION = "0.2.6";
 
     private final DatabaseConfig config;
     private DatabaseAdapter dbAdapter;

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SingleStore Load Test Script
-# Multi-Database Load Tester v0.2.5 (HikariCP)
+# Multi-Database Load Tester v0.2.6 (HikariCP)
 
 # Default Configuration
 DB_HOST="${SINGLESTORE_HOST:-localhost}"
@@ -26,7 +26,7 @@ MIN_POOL_SIZE="${MIN_POOL_SIZE:-100}"
 MAX_POOL_SIZE="${MAX_POOL_SIZE:-200}"
 
 # JAR file
-JAR_FILE="target/multi-db-load-tester-0.2.5.jar"
+JAR_FILE="target/multi-db-load-tester-0.2.6.jar"
 
 echo "=================================="
 echo "SingleStore Load Test Configuration"

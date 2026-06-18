@@ -5,7 +5,7 @@
 | 항목 | 설명 |
 |------|-------------|
 | 문서 버전 | 1.0 |
-| 프로젝트 버전 | v0.2.5 |
+| 프로젝트 버전 | v0.2.6 |
 | 최종 업데이트 | 2025-12-29 |
 | 문서 관리자 | 개발팀 |
 
@@ -523,7 +523,7 @@ Successfully connected using Tibero 6 driver (auto-fallback)
 
 수동으로 외부 드라이버를 지정하려면 `--driver-path` 옵션을 사용하세요:
 ```bash
-java -jar multi-db-load-tester-0.2.5.jar \
+java -jar multi-db-load-tester-0.2.6.jar \
     --db-type tibero \
     --host localhost --port 8629 --sid tibero \
     --driver-path /path/to/tibero6-jdbc.jar \

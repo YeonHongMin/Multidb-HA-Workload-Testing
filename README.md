@@ -1,4 +1,4 @@
-# Multi-Database Load Tester (Java) v0.2.5
+# Multi-Database Load Tester (Java) v0.2.6
 
 High-performance multi-threaded database load testing tool supporting Oracle, PostgreSQL, MySQL, SQL Server, Tibero, IBM DB2, and SingleStore (HikariCP-based)
 
@@ -302,13 +302,13 @@ JVM heap memory adjustment is required for high-load testing:
 
 ```bash
 # Default execution (2GB heap)
-java -Xms1g -Xmx2g -jar multi-db-load-tester-0.2.5.jar ...
+java -Xms1g -Xmx2g -jar multi-db-load-tester-0.2.6.jar ...
 
 # High-load testing (4GB heap, 500+ threads)
-java -Xms2g -Xmx4g -jar multi-db-load-tester-0.2.5.jar ...
+java -Xms2g -Xmx4g -jar multi-db-load-tester-0.2.6.jar ...
 
 # Ultra high-load testing (8GB heap, 1000+ threads)
-java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-0.2.5.jar ...
+java -Xms4g -Xmx8g -XX:+UseG1GC -jar multi-db-load-tester-0.2.6.jar ...
 ```
 
 #### Recommended Resources by Thread Count
@@ -390,7 +390,7 @@ mvn clean package -DskipTests
 
 ```bash
 # Default execution (start clean with --truncate, default warmup 30 seconds)
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test_user --password test_pass \
@@ -399,7 +399,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --test-duration 60
 
 # Run without warmup
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test_user --password test_pass \
@@ -414,7 +414,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### 3. Help
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar --help
+java -jar java/target/multi-db-load-tester-0.2.6.jar --help
 ```
 
 ---
@@ -441,7 +441,7 @@ Therefore, consecutive runs are possible without additional options.
 
 ```bash
 # Step 1: Insert data with insert-only (start clean with --truncate)
-java -jar target/multi-db-load-tester-0.2.5.jar \
+java -jar target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
@@ -451,7 +451,7 @@ java -jar target/multi-db-load-tester-0.2.5.jar \
     --warmup 10
 
 # Step 2: Run update-only (keep existing data without --truncate)
-java -jar target/multi-db-load-tester-0.2.5.jar \
+java -jar target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
@@ -460,7 +460,7 @@ java -jar target/multi-db-load-tester-0.2.5.jar \
     --warmup 10
 
 # Step 3: Run delete-only (keep existing data without --truncate)
-java -jar target/multi-db-load-tester-0.2.5.jar \
+java -jar target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test --password pass \
@@ -479,7 +479,7 @@ java -jar target/multi-db-load-tester-0.2.5.jar \
 
 ```bash
 # SID format
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --sid ORCL \
     --user test_user --password pass \
@@ -489,7 +489,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --warmup 30
 
 # Service Name format
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host 192.168.0.100 --port 1521 --service-name XEPDB1 \
     --user test_user --password pass \
@@ -502,7 +502,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### PostgreSQL
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost --port 5432 --database testdb \
     --user test_user --password pass \
@@ -515,7 +515,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### MySQL
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type mysql \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
@@ -530,7 +530,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### SQL Server
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type sqlserver \
     --host localhost --port 1433 --database testdb \
     --user sa --password pass \
@@ -544,7 +544,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 
 ```bash
 # SID format
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type tibero \
     --host 192.168.0.140 --port 8629 --sid tibero \
     --user test_user --password pass \
@@ -554,7 +554,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --warmup 30
 
 # Service Name format
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type tibero \
     --host 192.168.0.140 --port 8629 --service-name tibero_svc \
     --user test_user --password pass \
@@ -567,7 +567,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### IBM DB2
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type db2 \
     --host localhost --port 50000 --database testdb \
     --user db2inst1 --password pass \
@@ -580,7 +580,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### SingleStore
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type singlestore \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
@@ -602,7 +602,7 @@ You can specify a direct JDBC URL for complex connection strings or RAC/SCAN env
 
 ```bash
 # Oracle RAC/SCAN environment
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --jdbc-url "jdbc:oracle:thin:@//scan-ip:1521/SERVICE_NAME" \
     --user test --password pass \
@@ -611,49 +611,49 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --test-duration 60
 
 # Oracle TNS format
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --jdbc-url "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=host1)(PORT=1521))(ADDRESS=(PROTOCOL=TCP)(HOST=host2)(PORT=1521))(LOAD_BALANCE=yes)(CONNECT_DATA=(SERVICE_NAME=PROD)))" \
     --user test --password pass \
     --thread-count 100
 
 # PostgreSQL with SSL
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --jdbc-url "jdbc:postgresql://localhost:5432/testdb?ssl=true&sslmode=require" \
     --user test --password pass \
     --thread-count 50
 
 # MySQL with options
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type mysql \
     --jdbc-url "jdbc:mysql://localhost:3306/testdb?useSSL=false&serverTimezone=UTC&rewriteBatchedStatements=true" \
     --user root --password pass \
     --thread-count 50
 
 # SQL Server with instance name
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type sqlserver \
     --jdbc-url "jdbc:sqlserver://localhost\\SQLEXPRESS;databaseName=testdb;encrypt=false" \
     --user sa --password pass \
     --thread-count 100
 
 # Tibero
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type tibero \
     --jdbc-url "jdbc:tibero:thin:@//192.168.0.100:8629/tibero" \
     --user test --password pass \
     --thread-count 100
 
 # IBM DB2
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type db2 \
     --jdbc-url "jdbc:db2://localhost:50000/testdb:currentSchema=DB2INST1;" \
     --user db2inst1 --password pass \
     --thread-count 100
 
 # SingleStore
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type singlestore \
     --jdbc-url "jdbc:singlestore://localhost:3306/testdb?allowPublicKeyRetrieval=true" \
     --user root --password pass \
@@ -668,7 +668,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 
 ```bash
 # Delete existing data and start test from clean state
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -682,7 +682,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### Warmup + Ramp-up + Rate Limiting
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost --port 5432 --database testdb \
     --user test --password pass \
@@ -697,7 +697,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### Batch INSERT
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type mysql \
     --host localhost --port 3306 --database testdb \
     --user root --password pass \
@@ -711,7 +711,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 
 ```bash
 # JSON format
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -720,7 +720,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
     --output-file results/test_result.json
 
 # CSV format
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host localhost --port 1521 --sid XEPDB1 \
     --user test --password pass \
@@ -980,8 +980,8 @@ No warmup period. Test duration: 60 seconds
 
 ### Leak Detection Warning
 
-- Occurs when transaction processing time exceeds `--leak-detection-threshold`
-- Increase threshold if long-running transactions are expected
+- Workers acquire and release a connection for each transaction, so HikariCP's "Apparent connection leak detected" warning should not appear during normal operation.
+- If the warning still occurs, it indicates an actual long-running transaction or connection leak; increase `--leak-detection-threshold` or investigate the database/network.
 
 ### MySQL Pool Size Limit
 
@@ -1062,15 +1062,15 @@ No warmup period. Test duration: 60 seconds
 **Usage Examples:**
 ```bash
 # SID format (existing method)
-java -jar multi-db-load-tester-0.2.5.jar --db-type oracle --host localhost \
+java -jar multi-db-load-tester-0.2.6.jar --db-type oracle --host localhost \
     --port 1521 --sid ORCL --user test --password pass
 
 # Service Name format
-java -jar multi-db-load-tester-0.2.5.jar --db-type oracle --host localhost \
+java -jar multi-db-load-tester-0.2.6.jar --db-type oracle --host localhost \
     --port 1521 --service-name XEPDB1 --user test --password pass
 
 # Direct JDBC URL specification (RAC/SCAN environment)
-java -jar multi-db-load-tester-0.2.5.jar --db-type oracle \
+java -jar multi-db-load-tester-0.2.6.jar --db-type oracle \
     --jdbc-url "jdbc:oracle:thin:@//scan-ip:1521/SERVICE" \
     --user test --password pass
 ```

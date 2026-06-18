@@ -5,7 +5,7 @@
 | 항목 | 설명 |
 |------|-------------|
 | 문서 버전 | 1.0 |
-| 프로젝트 버전 | v0.2.5 |
+| 프로젝트 버전 | v0.2.6 |
 | 최종 업데이트 | 2025-12-29 |
 | 문서 관리자 | 개발팀 |
 
@@ -62,7 +62,7 @@ ls -la target/multi-db-load-tester-*.jar
 ### 3.2 JAR 파일
 
 빌드 완료 후 다음 JAR 파일이 생성됩니다:
-- `target/multi-db-load-tester-0.2.5.jar`
+- `target/multi-db-load-tester-0.2.6.jar`
 
 ### 3.3 JDBC 드라이버
 
@@ -85,7 +85,7 @@ java/jre/
 ### 4.1 PostgreSQL 예시
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
@@ -100,7 +100,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### 4.2 MySQL 예시
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type mysql \
     --host localhost \
     --port 3306 \
@@ -384,7 +384,7 @@ DELETE만 수행합니다.
 #### PostgreSQL 100 스레드, 5분 테스트
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
@@ -401,7 +401,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 #### 500 스레드, 10분, INSERT_ONLY
 
 ```bash
-java -Xmx4g -Xms4g -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -Xmx4g -Xms4g -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type mysql \
     --host localhost \
     --port 3306 \
@@ -419,7 +419,7 @@ java -Xmx4g -Xms4g -jar java/target/multi-db-load-tester-0.2.5.jar \
 #### 목표 5000 TPS로 제한
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
@@ -437,7 +437,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 #### 30초 램프업으로 점진적 부하 증가
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type oracle \
     --host localhost \
     --port 1521 \
@@ -455,7 +455,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 #### JSON 형식으로 결과 저장
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
@@ -472,7 +472,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 #### CSV 형식으로 결과 저장
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
@@ -491,7 +491,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 #### 테스트 전 테이블 비우기
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
@@ -509,7 +509,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 #### 커넥션 풀 최적화
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
@@ -605,7 +605,7 @@ Connection Pool Statistics:
 ### 10.1 OLTP 워크로드 시뮬레이션
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
@@ -621,7 +621,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### 10.2 배치 데이터 로드
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type mysql \
     --host localhost \
     --port 3306 \
@@ -637,7 +637,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 ### 10.3 읽기 전용 워크로드
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
@@ -654,7 +654,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 #### 이전 데이터베이스 (MySQL)
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type mysql \
     --host mysql-server \
     --port 3306 \
@@ -671,7 +671,7 @@ java -jar java/target/multi-db-load-tester-0.2.5.jar \
 #### 새로운 데이터베이스 (PostgreSQL)
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host postgresql-server \
     --port 5432 \
@@ -789,7 +789,7 @@ public class LoadTestExample {
 ### 13.2 DDL 출력
 
 ```bash
-java -jar java/target/multi-db-load-tester-0.2.5.jar \
+java -jar java/target/multi-db-load-tester-0.2.6.jar \
     --db-type postgresql \
     --host localhost \
     --port 5432 \
